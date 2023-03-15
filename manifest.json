@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-jelly-snippets",
 	"name": "Jelly Snippets",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "This plugin implements text snippets: replace text after typing a snippet on some trigger or command.",
 	"author": "Spencer Gouw",
