@@ -30,6 +30,10 @@ One of my goals writing this was to write a simple plugin that used the API exac
 
 Another motivation was that I wanted to make a plugin by which I could type in my personal note-taking syntax (called JellyNote); I originally was going to write a whole editor extension, but I eventually realized that I could implement it with snippets. So, I'll be adding features to this plugin as long as I need them for JellyNote syntax.
 
+This plugin also reminds me of LaTeX2Unicode, a neovim plugin which I used extensively in my first two years of college. I liked it because it would automatically change latex to unicode on pressing space; that was it. No stretching for the tab key. 
+
+It's since been incorporated back into [julia.vim](https://github.com/JuliaEditorSupport/julia-vim). I didn't originally mean to write a plugin that could provide this kind of functionality - but I suppose the concept of text translation is really useful!
+
 ## Future Improvements
 
 - Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
