@@ -30,7 +30,7 @@ interface JellySnippetSettings {
 // ? TODO: Can we implement growable lists in settings?
 
 const DEFAULT_SETTINGS: JellySnippetSettings = {
-	searchSnippetsFile: String.raw`asd |+| snipped ya
+	searchSnippetsFile: String.raw`Snip me! |+| Snippet successfully replaced.
 -==-
 - |+| #####
 -==-
@@ -136,7 +136,6 @@ export default class JellySnippet extends Plugin {
 
 	prepareSearchesForSearchSnippets(): void {
 		// for each snippet loaded, prepare a simple search.
-		this.searches = {};
 		for (let key in this.searchSnippets) {
 			this.searches[key] = prepareSimpleSearch(key);
 		}
@@ -165,12 +164,14 @@ export default class JellySnippet extends Plugin {
 		for (let [lhs, search] of Object.entries(this.searches)) {
 			let searchResult = search(curLineText);
 			if (searchResult) {
-				let matchpart = searchResult.matches.find(
+				let lateMatchPart = searchResult.matches.find(
 					(part) => part[1] === curpos.ch,
 				);
-				if (matchpart) {
-					let from: EditorPosition = { line: line, ch: matchpart[0] };
-					let to: EditorPosition = { line: line, ch: matchpart[1] };
+				if (lateMatchPart) {
+					// Since simpleSearch separates by word for some dumb reason, use the earliest match in searchResult.matches.
+					let earlyMatchPart = searchResult.matches[0];
+					let from: EditorPosition = { line: line, ch: earlyMatchPart[0] };
+					let to: EditorPosition = { line: line, ch: lateMatchPart[1] };
 					editor.replaceRange(this.searchSnippets[lhs], from, to);
 				}
 			}
@@ -207,7 +208,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "JellySnippet Settings" });
+		containerEl.createEl("h2", { text: "Jelly Snippets - Settings" });
 
 		new Setting(containerEl)
 			.setName("Search Snippets")
