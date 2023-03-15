@@ -79,7 +79,7 @@ export default class JellySnippet extends Plugin {
 			) {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view) {
-					this.searchSnippet(view.editor);
+					this.triggerSearchSnippet(view.editor);
 				}
 			}
 		});
@@ -88,7 +88,7 @@ export default class JellySnippet extends Plugin {
 			id: "trigger-search-snippet",
 			name: "Trigger search snippet",
 			editorCallback: (editor: Editor) => {
-				this.searchSnippet(editor);
+				this.triggerSearchSnippet(editor);
 			},
 		});
 
@@ -101,6 +101,8 @@ export default class JellySnippet extends Plugin {
 		});
 
 		this.addSettingTab(new JellySnippetsSettingTab(this.app, this));
+
+		console.log("Jelly Snippets: loading success.")
 	}
 
 	onunload() {}
@@ -140,19 +142,17 @@ export default class JellySnippet extends Plugin {
 		}
 	}
 
-	triggerSnippet(editor: Editor): void {}
+	// triggerRegexSnippet(editor: Editor): void {
+	// 	let curpos = editor.getCursor();
+	// 	let startOfLine = curpos;
+	// 	startOfLine.ch = 0;
+	// 	let lhs = editor.getRange(startOfLine, curpos);
+	// 	// go through the regex snippets and check if any of the regexes match.
+	// 	// * Constraint: maybe shift the responsibility on the user to write regexes that match all the beginning.
+	// 	// e.g. "^.*([\s:/.,-])asd" would match an asd that comes right after a word delimiter/whitespace and any number of characters.
+	// }
 
-	regexSnippet(editor: Editor): void {
-		let curpos = editor.getCursor();
-		let startOfLine = curpos;
-		startOfLine.ch = 0;
-		let lhs = editor.getRange(startOfLine, curpos);
-		// go through the regex snippets and check if any of the regexes match.
-		// * Constraint: maybe shift the responsibility on the user to write regexes that match all the beginning.
-		// e.g. "^.*([\s:/.,-])asd" would match an asd that comes right after a word delimiter/whitespace and any number of characters.
-	}
-
-	searchSnippet(editor: Editor): void {
+	triggerSearchSnippet(editor: Editor): void {
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
 
