@@ -31,14 +31,7 @@ interface JellySnippetSettings {
 
 const DEFAULT_SETTINGS: JellySnippetSettings = {
 	searchSnippetsFile: 
-		String.raw`asd |+| snipped ya
-		-==-
-		- |+| #####
-		-==-
-		: |+| -
-		-==-
-		:: |+| hi
-		`,
+		String.raw`asd |+| snipped ya-==-- |+| #####-==-: |+| --==-:: |+| hi`,
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: true,
@@ -62,8 +55,8 @@ The thing about regex snippets is that the more power we want to add, the harder
 
 export default class JellySnippet extends Plugin {
 	settings: JellySnippetSettings;
-	private searchSnippets: { [key: string]: string };
-	private searches: { [key: string]: (text: string) => SearchResult | null };
+	private searchSnippets: { [key: string]: string } = {};
+	private searches: { [key: string]: (text: string) => SearchResult | null } = {};
 
 	async onload() {
 		await this.loadSettings();
@@ -112,6 +105,7 @@ export default class JellySnippet extends Plugin {
 		for (let snippet of snippetLines) {
 			let snippetParts = snippet.split(this.settings.snippetPartDivider);
 			if (snippetParts.length === 2) {
+				console.log(snippetParts);
 				this.searchSnippets[snippetParts[0]] = snippetParts[1];
 			} else {
 				console.log("Failed to register search snippet: ", snippet);
@@ -140,8 +134,6 @@ export default class JellySnippet extends Plugin {
 	}
 
 	searchSnippet(editor: Editor): void {
-		this.searchSnippets = {};
-
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
 
