@@ -1,11 +1,11 @@
 {
-	"id": "obsidian-jelly-snippet",
+	"id": "obsidian-jelly-snippets",
 	"name": "Jelly Snippets",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This plugin implements text snippets: replace text after typing with a command or space/tab.",
+	"description": "This plugin implements text snippets: replace text after typing a snippet on some trigger or command.",
 	"author": "Spencer Gouw",
 	"authorUrl": "github.com/rabirabirara",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }
