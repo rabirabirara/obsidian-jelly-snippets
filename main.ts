@@ -65,9 +65,6 @@ export default class JellySnippets extends Plugin {
 		// If keydown events are set...
 		if (this.settings.triggerOnSpace || this.settings.triggerOnTab) {
 			const onKeyEvent = (evt: KeyboardEvent) => {
-				if (this.settings === undefined) {
-					console.log("undefined settings");
-				}
 				if (
 					(!evt.shiftKey) && // * don't trigger if shift is pressed down too however
 					((this.settings.triggerOnSpace && evt.code === "Space") ||
@@ -107,8 +104,6 @@ export default class JellySnippets extends Plugin {
 		});
 
 		this.addSettingTab(new JellySnippetsSettingTab(this.app, this));
-
-		console.log("Jelly Snippets: loading success.")
 	}
 
 	onunload() {}
