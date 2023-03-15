@@ -74,8 +74,9 @@ export default class JellySnippet extends Plugin {
 
 		this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
 			if (
-				(this.settings.triggerOnSpace && evt.code === "Space") ||
-				(this.settings.triggerOnTab && evt.code === "Tab")
+				((this.settings.triggerOnSpace && evt.code === "Space") ||
+				(this.settings.triggerOnTab && evt.code === "Tab")) &&
+                (!evt.shiftKey) // * don't trigger if shift is pressed down too however
 			) {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view) {
@@ -219,7 +220,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.setPlaceholder("-==-")
 					.setValue(this.plugin.settings.snippetDivider)
 					.onChange(async (value) => {
-						this.plugin.settings.snippetPartDivider = value;
+						this.plugin.settings.snippetDivider = value;
 						await this.plugin.saveSettings();
 					}),
 			);
@@ -242,7 +243,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Trigger on Space")
 			.setDesc(
-				"If enabled, the snippet function will trigger when space is pressed.",
+				"If enabled, the snippet function will trigger when space is pressed (but not while shift is held).",
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -256,7 +257,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Trigger on Tab")
 			.setDesc(
-				"If enabled, the snippet function will trigger when tab is pressed.",
+				"If enabled, the snippet function will trigger when tab is pressed (but not while shift is held).",
 			)
 			.addToggle((toggle) =>
 				toggle
