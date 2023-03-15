@@ -59,21 +59,36 @@ export default class JellySnippets extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		// Check settings and load search snippets in.
 		this.reloadSearchSnippets();
-
-		this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
-			if (
-				((this.settings.triggerOnSpace && evt.code === "Space") ||
-				(this.settings.triggerOnTab && evt.code === "Tab")) &&
-                // TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
-                (!evt.shiftKey) // * don't trigger if shift is pressed down too however
-			) {
-				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (view) {
-					this.triggerSearchSnippet(view.editor);
+		
+		// If keydown events are set...
+		if (this.settings.triggerOnSpace || this.settings.triggerOnTab) {
+			const onKeyEvent = (evt: KeyboardEvent) => {
+				if (this.settings === undefined) {
+					console.log("undefined settings");
 				}
-			}
-		});
+				if (
+					(!evt.shiftKey) && // * don't trigger if shift is pressed down too however
+					((this.settings.triggerOnSpace && evt.code === "Space") ||
+					(this.settings.triggerOnTab && evt.code === "Tab"))
+					// TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
+				) {
+					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+					if (view) {
+						this.triggerSearchSnippet(view.editor);
+					}
+				}
+			};
+
+			// Register for main window.
+			this.registerDomEvent(document, "keydown", onKeyEvent);
+
+			// If window changes, registerDomEvent for new window if so.
+			this.registerEvent(this.app.workspace.on('window-open', (event) => {
+				this.registerDomEvent(activeWindow, "keydown", onKeyEvent);
+			}));
+		}
 
 		this.addCommand({
 			id: "trigger-search-snippet",
@@ -261,3 +276,4 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			);
 	}
 }
+

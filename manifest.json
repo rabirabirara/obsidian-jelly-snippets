@@ -6,6 +6,5 @@
 	"description": "This plugin implements text snippets: replace text after typing a snippet on some trigger or command.",
 	"author": "Spencer Gouw",
 	"authorUrl": "github.com/rabirabirara",
-	"fundingUrl": "",
 	"isDesktopOnly": false
 }
