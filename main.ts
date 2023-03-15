@@ -30,8 +30,13 @@ interface JellySnippetSettings {
 // ? TODO: Can we implement growable lists in settings?
 
 const DEFAULT_SETTINGS: JellySnippetSettings = {
-	searchSnippetsFile: 
-		String.raw`asd |+| snipped ya-==-- |+| #####-==-: |+| --==-:: |+| hi`,
+	searchSnippetsFile: String.raw`asd |+| snipped ya
+-==-
+- |+| #####
+-==-
+: |+| -
+-==-
+:: |+| hi`,
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: true,
@@ -41,6 +46,9 @@ const DEFAULT_SETTINGS: JellySnippetSettings = {
 	postSnippetCursorSymbol: "%move%",
 };
 
+// TODO: Add semantic symbols to represent certain special characters.
+// TODO: Also implement those semantic symbols for control characters.
+// Specifically, allow me to add a "whitespace" symbol so that I can put newlines in snippets if I need.
 // TODO: I should use regexable snippets. Or at least implement it somehow somewhere.
 // regex: ^.*(all the whitespace, word delimiters)<snippet regex>
 /*
@@ -56,13 +64,13 @@ The thing about regex snippets is that the more power we want to add, the harder
 export default class JellySnippet extends Plugin {
 	settings: JellySnippetSettings;
 	private searchSnippets: { [key: string]: string } = {};
-	private searches: { [key: string]: (text: string) => SearchResult | null } = {};
+	private searches: { [key: string]: (text: string) => SearchResult | null } =
+		{};
 
 	async onload() {
 		await this.loadSettings();
 
-		this.parseSearchSnippets();
-		this.prepareSearchesForSearchSnippets();
+		this.reloadSearchSnippets();
 
 		this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
 			if (
@@ -71,8 +79,6 @@ export default class JellySnippet extends Plugin {
 			) {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (view) {
-					// this.simpleWordSnippet(view.editor);
-					// this.regexSnippet(view.editor);
 					this.searchSnippet(view.editor);
 				}
 			}
@@ -83,6 +89,14 @@ export default class JellySnippet extends Plugin {
 			name: "Trigger search snippet",
 			editorCallback: (editor: Editor) => {
 				this.searchSnippet(editor);
+			},
+		});
+
+		this.addCommand({
+			id: "reload-snippets",
+			name: "Reload snippets",
+			callback: () => {
+				this.reloadSearchSnippets();
 			},
 		});
 
@@ -99,13 +113,20 @@ export default class JellySnippet extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	reloadSearchSnippets(): void {
+		this.parseSearchSnippets();
+		this.prepareSearchesForSearchSnippets();
+	}
+
 	parseSearchSnippets(): void {
 		// go through the search snippets file, split by the snippet divider, split by the part divider, put in map
-		let snippetLines = this.settings.searchSnippetsFile.split(this.settings.snippetDivider);
+		let snippetLines = this.settings.searchSnippetsFile.split(
+			this.settings.snippetDivider,
+		);
 		for (let snippet of snippetLines) {
-			let snippetParts = snippet.split(this.settings.snippetPartDivider);
+			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
+			console.log(snippetParts);
 			if (snippetParts.length === 2) {
-				console.log(snippetParts);
 				this.searchSnippets[snippetParts[0]] = snippetParts[1];
 			} else {
 				console.log("Failed to register search snippet: ", snippet);
@@ -155,19 +176,6 @@ export default class JellySnippet extends Plugin {
 			}
 		}
 	}
-
-	// simpleWordSnippet(editor: Editor): void {
-	// 	let curpos = editor.getCursor();
-	// 	let curword = editor.wordAt(curpos);
-	// 	if (curword) {
-	// 		// check from curpos back to head of curword
-	// 		let lhs = editor.getRange(curword.from, curpos);
-	// 		// * if you have two of the same snippet, the most recent definition should take precedence.
-	// 		if (lhs in this.settings.snippets) {
-	// 			editor.replaceRange(this.settings.snippets[lhs], curword.from, curpos);
-	// 		}
-	// 	}
-	// }
 }
 
 class SampleModal extends Modal {
@@ -200,6 +208,52 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl("h2", { text: "JellySnippet Settings" });
+
+		new Setting(containerEl)
+			.setName("Search Snippets")
+			.setDesc(
+				"Specify your search snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability.",
+			)
+			.addTextArea((textarea) =>
+				textarea
+					.setPlaceholder(
+						`before${this.plugin.settings.snippetPartDivider}after`,
+					)
+					.setValue(this.plugin.settings.searchSnippetsFile)
+					.onChange(async (value) => {
+						this.plugin.settings.searchSnippetsFile = value;
+						await this.plugin.saveSettings();
+						this.plugin.reloadSearchSnippets(); // ? is this necessary to update the snippets?
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Snippet line divider")
+			.setDesc("This string will divide each separate snippet definition.")
+			.addText((text) =>
+				text
+					.setPlaceholder("-==-")
+					.setValue(this.plugin.settings.snippetDivider)
+					.onChange(async (value) => {
+						this.plugin.settings.snippetPartDivider = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Snippet part divider")
+			.setDesc(
+				"This string will divide the lhs and rhs of a snippet definition.",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(" |+| ")
+					.setValue(this.plugin.settings.snippetPartDivider)
+					.onChange(async (value) => {
+						this.plugin.settings.snippetPartDivider = value;
+						await this.plugin.saveSettings();
+					}),
+			);
 
 		new Setting(containerEl)
 			.setName("Trigger on Space")
