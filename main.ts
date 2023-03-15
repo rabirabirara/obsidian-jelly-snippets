@@ -127,6 +127,8 @@ export default class JellySnippet extends Plugin {
 			this.settings.snippetDivider,
 		);
 		for (let snippet of snippetLines) {
+            // trim() is used so that each snippet line does not retain newlines.
+            // TODO: Add the newline symbol for dividers.
 			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
 			if (snippetParts.length === 2) {
 				this.searchSnippets[snippetParts[0]] = snippetParts[1];
