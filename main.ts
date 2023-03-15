@@ -43,7 +43,7 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	triggerOnTab: true, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
-	postSnippetCursorSymbol: "%move%",
+	postSnippetCursorSymbol: "%move%",	// TODO: Actually implement this symbol.
 };
 
 // TODO: Add semantic symbols to represent certain special characters.
