@@ -127,7 +127,7 @@ export default class JellySnippet extends Plugin {
 			this.settings.snippetDivider,
 		);
 		for (let snippet of snippetLines) {
-			let snippetParts = snippet.trimEnd().split(this.settings.snippetPartDivider);
+			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
 			if (snippetParts.length === 2) {
 				this.searchSnippets[snippetParts[0]] = snippetParts[1];
 			} else {
