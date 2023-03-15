@@ -6,7 +6,7 @@ A simple text snippets plugin for Obsidian.md.
 
 Pretty simple. You probably have run into snippets before.
 
-1. Specify a mapping of snippet to replacement.
+1. Specify a mapping of snippet to replacement in the settings tab.
 	
 	`snippet. |+| replacement!`
 	
@@ -30,6 +30,6 @@ One of my goals writing this was to write a simple plugin that used the API exac
 
 ## Future Improvements
 
-- Control characters in snippets
-- Semantic symbols in snippets
+- Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
+- Semantic symbols in snippets (e.g. where does cursor go afterwards?)
 - Regex capabilities
