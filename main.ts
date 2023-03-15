@@ -3,18 +3,12 @@ import {
 	Editor,
 	EditorPosition,
 	MarkdownView,
-	Modal,
-	moment,
-	Notice,
 	Plugin,
 	PluginSettingTab,
 	prepareSimpleSearch,
 	SearchResult,
 	Setting,
 } from "obsidian";
-
-// Remember to rename these classes and interfaces!
-// for DOM events: https://www.w3schools.com/jsref/dom_obj_event.asp
 
 interface JellySnippetsSettings {
 	searchSnippetsFile: string;
@@ -23,7 +17,7 @@ interface JellySnippetsSettings {
 	triggerOnSpace: boolean;
 	triggerOnTab: boolean;
 	snippetPartDivider: string;
-	snippetDivider: string; // the string that splits snippets
+	snippetDivider: string;
 	postSnippetCursorSymbol: string;
 }
 // TODO: implement cursor move after snippet replace.
@@ -52,16 +46,11 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 // TODO: I should use regexable snippets. Or at least implement it somehow somewhere.
 // regex: ^.*(all the whitespace, word delimiters)<snippet regex>
 /*
-need regex literal and flags...
-|=| |=|
-
 The thing about regex snippets is that the more power we want to add, the harder it is to implement.
 ! Also, need to test safety of regex... use safe-regex (npm)
 */
-// two modes: word snippets, with the standard delimiters (only as efficient as wordAt algorithm),
-// search from cursorpos to head of editorrange given by wordAt
 
-export default class JellySnippet extends Plugin {
+export default class JellySnippets extends Plugin {
 	settings: JellySnippetsSettings;
 	private searchSnippets: { [key: string]: string } = {};
 	private searches: { [key: string]: (text: string) => SearchResult | null } =
@@ -76,7 +65,7 @@ export default class JellySnippet extends Plugin {
 			if (
 				((this.settings.triggerOnSpace && evt.code === "Space") ||
 				(this.settings.triggerOnTab && evt.code === "Tab")) &&
-                // TODO: Add a dropdown setting so that users can control which modifier key cancels things out.
+                // TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
                 (!evt.shiftKey) // * don't trigger if shift is pressed down too however
 			) {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -183,9 +172,9 @@ export default class JellySnippet extends Plugin {
 }
 
 class JellySnippetsSettingTab extends PluginSettingTab {
-	plugin: JellySnippet;
+	plugin: JellySnippets;
 
-	constructor(app: App, plugin: JellySnippet) {
+	constructor(app: App, plugin: JellySnippets) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
