@@ -76,6 +76,7 @@ export default class JellySnippet extends Plugin {
 			if (
 				((this.settings.triggerOnSpace && evt.code === "Space") ||
 				(this.settings.triggerOnTab && evt.code === "Tab")) &&
+                // TODO: Add a dropdown setting so that users can control which modifier key cancels things out.
                 (!evt.shiftKey) // * don't trigger if shift is pressed down too however
 			) {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
