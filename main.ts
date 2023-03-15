@@ -16,7 +16,7 @@ import {
 // Remember to rename these classes and interfaces!
 // for DOM events: https://www.w3schools.com/jsref/dom_obj_event.asp
 
-interface JellySnippetSettings {
+interface JellySnippetsSettings {
 	searchSnippetsFile: string;
 	// regexSnippetsFile: string;
 	// regexSnippets: [RegExp, string][];
@@ -29,7 +29,7 @@ interface JellySnippetSettings {
 // TODO: implement cursor move after snippet replace.
 // ? TODO: Can we implement growable lists in settings?
 
-const DEFAULT_SETTINGS: JellySnippetSettings = {
+const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	searchSnippetsFile: String.raw`Snip me! |+| Snippet successfully replaced.
 -==-
 - |+| #####
@@ -62,7 +62,7 @@ The thing about regex snippets is that the more power we want to add, the harder
 // search from cursorpos to head of editorrange given by wordAt
 
 export default class JellySnippet extends Plugin {
-	settings: JellySnippetSettings;
+	settings: JellySnippetsSettings;
 	private searchSnippets: { [key: string]: string } = {};
 	private searches: { [key: string]: (text: string) => SearchResult | null } =
 		{};
@@ -100,7 +100,7 @@ export default class JellySnippet extends Plugin {
 			},
 		});
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new JellySnippetsSettingTab(this.app, this));
 	}
 
 	onunload() {}
@@ -125,7 +125,6 @@ export default class JellySnippet extends Plugin {
 		);
 		for (let snippet of snippetLines) {
 			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
-			console.log(snippetParts);
 			if (snippetParts.length === 2) {
 				this.searchSnippets[snippetParts[0]] = snippetParts[1];
 			} else {
@@ -179,23 +178,7 @@ export default class JellySnippet extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText("Woah!");
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
+class JellySnippetsSettingTab extends PluginSettingTab {
 	plugin: JellySnippet;
 
 	constructor(app: App, plugin: JellySnippet) {
