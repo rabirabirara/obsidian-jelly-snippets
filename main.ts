@@ -228,7 +228,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Snippet part divider")
 			.setDesc(
-				"This string will divide the lhs and rhs of a snippet definition.",
+				"This string will divide the lhs and rhs of a snippet definition. (I recommend putting spaces in the ends of this string.)",
 			)
 			.addText((text) =>
 				text
