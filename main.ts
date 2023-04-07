@@ -263,9 +263,9 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.triggerOnSpace)
+					.setValue(this.plugin.settings.triggerOnTab)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnSpace = value;
+						this.plugin.settings.triggerOnTab = value;
 						await this.plugin.saveSettings();
 					}),
 			);
