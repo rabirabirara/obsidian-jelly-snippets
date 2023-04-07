@@ -117,6 +117,8 @@ export default class JellySnippets extends Plugin {
 	}
 
 	reloadSearchSnippets(): void {
+        this.searchSnippets = {};
+        this.searches = {};
 		this.parseSearchSnippets();
 		this.prepareSearchesForSearchSnippets();
 	}
