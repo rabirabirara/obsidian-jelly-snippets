@@ -65,17 +65,15 @@ export default class JellySnippets extends Plugin {
 		this.reloadSearchSnippets();
 		
 		// If keydown events are set...
-		if (this.settings.triggerOnSpace || this.settings.triggerOnTab) {
+		if (this.settings.triggerOnSpace || this.settings.triggerOnTab || this.settings.triggerOnEnter) {
 			const onKeyEvent = (evt: KeyboardEvent) => {
 				if (
-					(!evt.shiftKey) && // * don't trigger if shift is pressed down too however
-					((this.settings.triggerOnSpace && evt.code === "Space") ||
-					(this.settings.triggerOnTab && evt.code === "Tab"))
-					// TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
+					(!evt.shiftKey) // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
 				) {
+					// TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
 					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 					if (view) {
-						this.triggerSearchSnippet(view.editor);
+						this.triggerSearchSnippetAutomatically(view.editor, evt);
 					}
 				}
 			};
@@ -161,7 +159,51 @@ export default class JellySnippets extends Plugin {
 	// 	// e.g. "^.*([\s:/.,-])asd" would match an asd that comes right after a word delimiter/whitespace and any number of characters.
 	// }
 
-	triggerSearchSnippet(editor: Editor): void {
+    triggerSearchSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
+		switch (evt.key) {
+			case " ": {
+                if (this.settings.triggerOnSpace) {
+                    if (this.triggerSearchSnippet(editor)) {
+                        // TODO: undo Space, and then add option to redo space.
+                        // Currently impossible to undo the space because the entire snippet
+                        // and all this code triggers before the space actually happens.
+                        // So it will replace the snippet, go left, then place the space...
+                        // editor.exec("goLeft");
+                        return true;
+                    }
+                }
+				break;
+			}
+			case "Tab": {
+                if (this.settings.triggerOnTab) {
+                    if (this.triggerSearchSnippet(editor)) {
+                        // TODO: Option to redo tab here
+                        editor.exec("indentLess");
+                        return true;
+                    }
+                }
+				break;
+			}
+			case "Enter": {
+				// Undo works because newline comes out before this code executes.
+                if (this.settings.triggerOnEnter) {
+                    editor.undo();
+                    if (this.triggerSearchSnippet(editor)) {
+                        // TODO: Option to redo enter right here.
+                        return true;
+                    } else {
+                        editor.exec("newlineAndIndent");
+                    }
+                }
+			}
+			default: {
+				break;
+			}
+		}
+        return false;
+	}
+
+	triggerSearchSnippet(editor: Editor): boolean {
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
 
@@ -181,9 +223,11 @@ export default class JellySnippets extends Plugin {
 					let from: EditorPosition = { line: line, ch: earlyMatchPart[0] };
 					let to: EditorPosition = { line: line, ch: lateMatchPart[1] };
 					editor.replaceRange(this.searchSnippets[lhs], from, to);
+                    return true;
 				}
 			}
 		}
+        return false;
 	}
 }
 
