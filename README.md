@@ -24,7 +24,11 @@ Pretty simple. You probably have run into snippets before.
 	
 ### In greater detail:
 
-Snippets are defined in a text area (like a file) in settings. Each snippet has two parts: lhs and rhs. Naturally, there is a symbol to divide these two halves of a snippet, called a snippet part divider:
+Snippets are defined in a text area (like a file) in settings. Each snippet has two parts: lhs and rhs.
+
+The lhs (left hand side) determines what text gets replaced; the rhs (right hand side) determines what replaces the text.
+
+Naturally, there is a symbol to divide these two halves of a snippet, called a snippet part divider:
 
 ` |+| `, for example. (With spaces at the ends.)
 
@@ -75,7 +79,7 @@ It's since been incorporated back into [julia.vim](https://github.com/JuliaEdito
 ## Future Improvements/TODO
 
 - Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
-- Semantic symbols in snippets (e.g. where does cursor go afterwards?)
+- Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
 - Regex capabilities
 - Bugfixes and auditing?
 - Add newline option for snippet definition to make simple snippets easy rather than cumbersome
