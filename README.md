@@ -84,6 +84,7 @@ It's since been incorporated back into [julia.vim](https://github.com/JuliaEdito
 - Bugfixes and auditing?
 - Add newline option for snippet definition to make simple snippets easy rather than cumbersome
 - Add trigger on enter and a dropdown that allows each setting to either have the whitespace afterwards or not have it. (Currently doesn't work well with Tab; will have to see.)
+- Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo.
 
 ### Other caveats
 
