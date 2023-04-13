@@ -15,6 +15,7 @@ interface JellySnippetsSettings {
 	// regexSnippetsFile: string;
 	// regexSnippets: [RegExp, string][];
 	triggerOnSpace: boolean;
+    triggerOnEnter: boolean;
 	triggerOnTab: boolean;
 	snippetPartDivider: string;
 	snippetDivider: string;
@@ -34,6 +35,7 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: true,
+    triggerOnEnter: true,
 	triggerOnTab: true, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
@@ -256,6 +258,20 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.triggerOnSpace)
 					.onChange(async (value) => {
 						this.plugin.settings.triggerOnSpace = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+        new Setting(containerEl)
+			.setName("Trigger on Enter")
+			.setDesc(
+				"If enabled, the snippet function will trigger when enter is pressed (but not while shift is held).",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.triggerOnEnter)
+					.onChange(async (value) => {
+						this.plugin.settings.triggerOnEnter = value;
 						await this.plugin.saveSettings();
 					}),
 			);
