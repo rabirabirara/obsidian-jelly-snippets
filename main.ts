@@ -71,9 +71,9 @@ export default class JellySnippets extends Plugin {
 					(!evt.shiftKey) // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
 				) {
 					// TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
-					const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-					if (view) {
-						this.triggerSearchSnippetAutomatically(view.editor, evt);
+					const mdFile = this.app.workspace.activeEditor;
+					if (mdFile?.editor) {
+						this.triggerSearchSnippetAutomatically(mdFile.editor, evt);
 					}
 				}
 			};
