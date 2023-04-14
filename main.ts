@@ -200,7 +200,7 @@ export default class JellySnippets extends Plugin {
 					let abovelineEnd = editor.getLine(aboveline).length;
 					let peekPos: EditorPosition = { line: aboveline, ch: abovelineEnd };
 					if (this.triggerSearchSnippet(editor, peekPos)) {
-						if (this.settings.triggerOnEnter !== AutoTriggerOptions.EnabledNoWS) {
+						if (this.settings.triggerOnEnter === AutoTriggerOptions.EnabledNoWS) {
 							// undo the already created newline by deleting everything from curpos to above line's end
 							// yes, you need to recalculate the above line's end else it will use an incorrect position
 							let aboveLine = editor.getCursor().line - 1;
