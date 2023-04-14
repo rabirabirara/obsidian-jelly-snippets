@@ -185,15 +185,23 @@ export default class JellySnippets extends Plugin {
 				break;
 			}
 			case "Enter": {
-				// Undo works because newline comes out before this code executes.
                 if (this.settings.triggerOnEnter) {
-                    editor.undo();
-                    if (this.triggerSearchSnippet(editor)) {
-                        // TODO: Option to redo enter right here.
-                        return true;
-                    } else {
-                        editor.exec("newlineAndIndent");
-                    }
+                    // TODO: Could be inefficient. Profiling needed?
+					let curpos = editor.getCursor();
+					let aboveline = curpos.line - 1;
+					let abovelineEnd = editor.getLine(aboveline).length;
+					let peekPos: EditorPosition = { line: aboveline, ch: abovelineEnd };
+					if (this.triggerSearchSnippet(editor, peekPos)) {
+						if (this.settings.triggerOnEnter) {
+							// undo the already created newline by deleting everything from curpos to above line's end
+							// yes, you need to recalculate the above line's end
+							let aboveLine = editor.getCursor().line - 1;
+							let aboveLineEnd = editor.getLine(aboveLine).length;
+							let aboveLineEndPos: EditorPosition = { line: aboveLine, ch: aboveLineEnd };
+							editor.replaceRange("", aboveLineEndPos, curpos);
+						}
+						return true;
+					}
                 }
 			}
 			default: {
@@ -203,11 +211,11 @@ export default class JellySnippets extends Plugin {
         return false;
 	}
 
-	triggerSearchSnippet(editor: Editor): boolean {
+	triggerSearchSnippet(editor: Editor, pos: EditorPosition | null = null): boolean {
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
 
-		let curpos = editor.getCursor();
+		let curpos = pos ? pos : editor.getCursor();
 		let line = curpos.line;
 		let curLineText = editor.getLine(line);
 
