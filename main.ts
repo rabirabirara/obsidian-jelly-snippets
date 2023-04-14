@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: AutoTriggerOptions.Disabled,
     triggerOnEnter: AutoTriggerOptions.Disabled,
-	triggerOnTab: AutoTriggerOptions.Disabled, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
+	triggerOnTab: AutoTriggerOptions.Disabled,
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
 	postSnippetCursorSymbol: "%move%",	// TODO: Actually implement this symbol.
@@ -80,7 +80,6 @@ export default class JellySnippets extends Plugin {
 				if (
 					(!evt.shiftKey) // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
 				) {
-					// TODO: Add a dropdown setting so that users can control which modifier key cancels things out, or if any does at all.
 					const mdFile = this.app.workspace.activeEditor;
 					if (mdFile?.editor) {
 						this.triggerSearchSnippetAutomatically(mdFile.editor, evt);
@@ -174,11 +173,9 @@ export default class JellySnippets extends Plugin {
 			case " ": {
                 if (this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled) {
                     if (this.triggerSearchSnippet(editor)) {
-                        // TODO: undo Space, and then add option to redo space.
+                        // TODO: actually provide autotriggeroptions for Space.
                         // Currently impossible to undo the space because the entire snippet
                         // and all this code triggers before the space actually happens.
-                        // So it will replace the snippet, go left, then place the space...
-                        // editor.exec("goLeft");
                         return true;
                     }
                 }
