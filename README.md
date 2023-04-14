@@ -61,8 +61,6 @@ Then typing `lhs` and triggering the snippet command would replace `lhs` with:
 rhs
 superb |+| superbowls
 ```
-
-(NOTE: At this point in time, it WON'T work correctly; if you use the part divider in the rhs of a snippet it will fail to register the snippet entirely. I actually have a fix in master for this 066cdab, but I haven't updated the plugin yet.)
 	
 ## Why?
 
