@@ -34,9 +34,9 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 :: |+| hi`,
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
-	triggerOnSpace: true,
-    triggerOnEnter: true,
-	triggerOnTab: true, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
+	triggerOnSpace: false,
+    triggerOnEnter: false,
+	triggerOnTab: false, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
 	postSnippetCursorSymbol: "%move%",	// TODO: Actually implement this symbol.
