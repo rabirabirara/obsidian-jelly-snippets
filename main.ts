@@ -10,13 +10,19 @@ import {
 	Setting,
 } from "obsidian";
 
+enum AutoTriggerOptions {
+	Disabled = "disabled",
+	EnabledNoWS = "n-ws",
+	EnabledYesWS = "y-ws",
+}
+
 interface JellySnippetsSettings {
 	searchSnippetsFile: string;
 	// regexSnippetsFile: string;
 	// regexSnippets: [RegExp, string][];
-	triggerOnSpace: boolean;
-    triggerOnEnter: boolean;
-	triggerOnTab: boolean;
+	triggerOnSpace: AutoTriggerOptions;
+    triggerOnEnter: AutoTriggerOptions;
+	triggerOnTab: AutoTriggerOptions;
 	snippetPartDivider: string;
 	snippetDivider: string;
 	postSnippetCursorSymbol: string;
@@ -34,9 +40,9 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 :: |+| hi`,
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
-	triggerOnSpace: false,
-    triggerOnEnter: false,
-	triggerOnTab: false, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
+	triggerOnSpace: AutoTriggerOptions.Disabled,
+    triggerOnEnter: AutoTriggerOptions.Disabled,
+	triggerOnTab: AutoTriggerOptions.Disabled, // TODO: Fix this so that if snippet triggers, the tab doesn't also go through. In fact, maybe fix it so that space doesn't go through either if snippet triggers.
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
 	postSnippetCursorSymbol: "%move%",	// TODO: Actually implement this symbol.
@@ -65,7 +71,11 @@ export default class JellySnippets extends Plugin {
 		this.reloadSearchSnippets();
 		
 		// If keydown events are set...
-		if (this.settings.triggerOnSpace || this.settings.triggerOnTab || this.settings.triggerOnEnter) {
+		if (
+			this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled ||
+			this.settings.triggerOnTab !== AutoTriggerOptions.Disabled ||
+			this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled
+		) {
 			const onKeyEvent = (evt: KeyboardEvent) => {
 				if (
 					(!evt.shiftKey) // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
@@ -162,7 +172,7 @@ export default class JellySnippets extends Plugin {
     triggerSearchSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
 		switch (evt.key) {
 			case " ": {
-                if (this.settings.triggerOnSpace) {
+                if (this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled) {
                     if (this.triggerSearchSnippet(editor)) {
                         // TODO: undo Space, and then add option to redo space.
                         // Currently impossible to undo the space because the entire snippet
@@ -175,26 +185,27 @@ export default class JellySnippets extends Plugin {
 				break;
 			}
 			case "Tab": {
-                if (this.settings.triggerOnTab) {
-                    if (this.triggerSearchSnippet(editor)) {
-                        // TODO: Option to redo tab here
-                        editor.exec("indentLess");
-                        return true;
-                    }
-                }
+                if (this.settings.triggerOnTab !== AutoTriggerOptions.Disabled) {
+					if (this.triggerSearchSnippet(editor)) {
+						if (this.settings.triggerOnTab === AutoTriggerOptions.EnabledNoWS) {
+							editor.exec("indentLess");
+						}
+						return true;
+					}
+				}
 				break;
 			}
 			case "Enter": {
-                if (this.settings.triggerOnEnter) {
+                if (this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled) {
                     // TODO: Could be inefficient. Profiling needed?
 					let curpos = editor.getCursor();
 					let aboveline = curpos.line - 1;
 					let abovelineEnd = editor.getLine(aboveline).length;
 					let peekPos: EditorPosition = { line: aboveline, ch: abovelineEnd };
 					if (this.triggerSearchSnippet(editor, peekPos)) {
-						if (this.settings.triggerOnEnter) {
+						if (this.settings.triggerOnEnter !== AutoTriggerOptions.EnabledNoWS) {
 							// undo the already created newline by deleting everything from curpos to above line's end
-							// yes, you need to recalculate the above line's end
+							// yes, you need to recalculate the above line's end else it will use an incorrect position
 							let aboveLine = editor.getCursor().line - 1;
 							let aboveLineEnd = editor.getLine(aboveLine).length;
 							let aboveLineEndPos: EditorPosition = { line: aboveLine, ch: aboveLineEnd };
@@ -312,25 +323,31 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			.setDesc(
 				"If enabled, the snippet function will trigger when space is pressed (but not while shift is held).",
 			)
-			.addToggle((toggle) =>
-				toggle
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption(AutoTriggerOptions.Disabled, "Disabled")
+					// .addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
+					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
 					.setValue(this.plugin.settings.triggerOnSpace)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnSpace = value;
+						this.plugin.settings.triggerOnSpace = value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
 					}),
 			);
 
-        new Setting(containerEl)
+		new Setting(containerEl)
 			.setName("Trigger on Enter")
 			.setDesc(
 				"If enabled, the snippet function will trigger when enter is pressed (but not while shift is held).",
 			)
-			.addToggle((toggle) =>
-				toggle
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption(AutoTriggerOptions.Disabled, "Disabled")
+					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
+					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
 					.setValue(this.plugin.settings.triggerOnEnter)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnEnter = value;
+						this.plugin.settings.triggerOnEnter = value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
 					}),
 			);
@@ -340,11 +357,14 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			.setDesc(
 				"If enabled, the snippet function will trigger when tab is pressed (but not while shift is held).",
 			)
-			.addToggle((toggle) =>
-				toggle
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption(AutoTriggerOptions.Disabled, "Disabled")
+					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
+					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
 					.setValue(this.plugin.settings.triggerOnTab)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnTab = value;
+						this.plugin.settings.triggerOnTab = value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
 					}),
 			);
