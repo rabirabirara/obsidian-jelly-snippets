@@ -21,7 +21,7 @@ interface JellySnippetsSettings {
 	// regexSnippetsFile: string;
 	// regexSnippets: [RegExp, string][];
 	triggerOnSpace: AutoTriggerOptions;
-    triggerOnEnter: AutoTriggerOptions;
+	triggerOnEnter: AutoTriggerOptions;
 	triggerOnTab: AutoTriggerOptions;
 	snippetPartDivider: string;
 	snippetDivider: string;
@@ -41,11 +41,11 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	// regexSnippetsFile: "",,
 	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: AutoTriggerOptions.Disabled,
-    triggerOnEnter: AutoTriggerOptions.Disabled,
+	triggerOnEnter: AutoTriggerOptions.Disabled,
 	triggerOnTab: AutoTriggerOptions.Disabled,
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
-	postSnippetCursorSymbol: "%move%",	// TODO: Actually implement this symbol.
+	postSnippetCursorSymbol: "%move%", // TODO: Actually implement this symbol.
 };
 
 // TODO: Add semantic symbols to represent certain special characters.
@@ -69,7 +69,7 @@ export default class JellySnippets extends Plugin {
 
 		// Check settings and load search snippets in.
 		this.reloadSearchSnippets();
-		
+
 		// If keydown events are set...
 		if (
 			this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled ||
@@ -78,7 +78,7 @@ export default class JellySnippets extends Plugin {
 		) {
 			const onKeyEvent = (evt: KeyboardEvent) => {
 				if (
-					(!evt.shiftKey) // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
+					!evt.shiftKey // TODO: add function to determine when not to trigger. don't trigger if shift is pressed down as well e.g.
 				) {
 					const mdFile = this.app.workspace.activeEditor;
 					if (mdFile?.editor) {
@@ -91,9 +91,11 @@ export default class JellySnippets extends Plugin {
 			this.registerDomEvent(document, "keydown", onKeyEvent);
 
 			// If window changes, registerDomEvent for new window if so.
-			this.registerEvent(this.app.workspace.on('window-open', (event) => {
-				this.registerDomEvent(activeWindow, "keydown", onKeyEvent);
-			}));
+			this.registerEvent(
+				this.app.workspace.on("window-open", (event) => {
+					this.registerDomEvent(activeWindow, "keydown", onKeyEvent);
+				}),
+			);
 		}
 
 		this.addCommand({
@@ -126,8 +128,8 @@ export default class JellySnippets extends Plugin {
 	}
 
 	reloadSearchSnippets(): void {
-        this.searchSnippets = {};
-        this.searches = {};
+		this.searchSnippets = {};
+		this.searches = {};
 		this.parseSearchSnippets();
 		this.prepareSearchesForSearchSnippets();
 	}
@@ -138,11 +140,11 @@ export default class JellySnippets extends Plugin {
 			this.settings.snippetDivider,
 		);
 		for (let snippet of snippetLines) {
-            // trim() is used so that each snippet line does not retain newlines.
-            // TODO: Add the newline symbol for dividers.
+			// trim() is used so that each snippet line does not retain newlines.
+			// TODO: Add the newline symbol for dividers.
 			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
-            let lhs = snippetParts.shift();
-            let rhs = snippetParts.join(this.settings.snippetPartDivider);
+			let lhs = snippetParts.shift();
+			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
 				console.log("Failed to register search snippet: ", snippet);
 			} else {
@@ -168,21 +170,22 @@ export default class JellySnippets extends Plugin {
 	// 	// e.g. "^.*([\s:/.,-])asd" would match an asd that comes right after a word delimiter/whitespace and any number of characters.
 	// }
 
-    triggerSearchSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
+	triggerSearchSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
+		// remember the order: enter and tab come out before code triggers, space comes out after.
 		switch (evt.key) {
 			case " ": {
-                if (this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled) {
-                    if (this.triggerSearchSnippet(editor)) {
-                        // TODO: actually provide autotriggeroptions for Space.
-                        // Currently impossible to undo the space because the entire snippet
-                        // and all this code triggers before the space actually happens.
-                        return true;
-                    }
-                }
+				if (this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled) {
+					if (this.triggerSearchSnippet(editor)) {
+						// TODO: actually provide autotriggeroptions for Space.
+						// Currently impossible to undo the space because the entire snippet
+						// and all this code triggers before the space actually happens.
+						return true;
+					}
+				}
 				break;
 			}
 			case "Tab": {
-                if (this.settings.triggerOnTab !== AutoTriggerOptions.Disabled) {
+				if (this.settings.triggerOnTab !== AutoTriggerOptions.Disabled) {
 					if (this.triggerSearchSnippet(editor)) {
 						if (this.settings.triggerOnTab === AutoTriggerOptions.EnabledNoWS) {
 							editor.exec("indentLess");
@@ -193,33 +196,41 @@ export default class JellySnippets extends Plugin {
 				break;
 			}
 			case "Enter": {
-                if (this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled) {
-                    // TODO: Could be inefficient. Profiling needed?
+				if (this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled) {
+					// TODO: Could be inefficient. Profiling needed?
 					let curpos = editor.getCursor();
 					let aboveline = curpos.line - 1;
 					let abovelineEnd = editor.getLine(aboveline).length;
 					let peekPos: EditorPosition = { line: aboveline, ch: abovelineEnd };
 					if (this.triggerSearchSnippet(editor, peekPos)) {
-						if (this.settings.triggerOnEnter === AutoTriggerOptions.EnabledNoWS) {
+						if (
+							this.settings.triggerOnEnter === AutoTriggerOptions.EnabledNoWS
+						) {
 							// undo the already created newline by deleting everything from curpos to above line's end
 							// yes, you need to recalculate the above line's end else it will use an incorrect position
 							let aboveLine = editor.getCursor().line - 1;
 							let aboveLineEnd = editor.getLine(aboveLine).length;
-							let aboveLineEndPos: EditorPosition = { line: aboveLine, ch: aboveLineEnd };
+							let aboveLineEndPos: EditorPosition = {
+								line: aboveLine,
+								ch: aboveLineEnd,
+							};
 							editor.replaceRange("", aboveLineEndPos, curpos);
 						}
 						return true;
 					}
-                }
+				}
 			}
 			default: {
 				break;
 			}
 		}
-        return false;
+		return false;
 	}
 
-	triggerSearchSnippet(editor: Editor, pos: EditorPosition | null = null): boolean {
+	triggerSearchSnippet(
+		editor: Editor,
+		pos: EditorPosition | null = null,
+	): boolean {
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
 
@@ -234,23 +245,26 @@ export default class JellySnippets extends Plugin {
 					(part) => part[1] === curpos.ch,
 				);
 				if (lastMatchPart) {
-                    if (curpos.ch >= lhs.length) {
-                        // TODO: This change fixes old bug but snippet now triggers even if there is no whitespace before the lhs. Or does it? Verify this...
-                        // TODO: lhs still cannot have newlines in it. Wouldn't be hard to update however.
-                        let from: EditorPosition = { line: line, ch: curpos.ch - lhs.length };
-                        let to: EditorPosition = { line: line, ch: lastMatchPart[1] };
-                        let lookBack = editor.getRange(from, to);
-                        if (lookBack === lhs) {
-                            editor.replaceRange(this.searchSnippets[lhs], from, to);
-                            return true;
-                        }
-                    }
-                    // snippet before cursor found but not triggered means no other snippet should trigger
-                    return false;
+					if (curpos.ch >= lhs.length) {
+						// TODO: This change fixes old bug but snippet now triggers even if there is no whitespace before the lhs. Or does it? Verify this...
+						// TODO: lhs still cannot have newlines in it. Wouldn't be hard to update however.
+						let from: EditorPosition = {
+							line: line,
+							ch: curpos.ch - lhs.length,
+						};
+						let to: EditorPosition = { line: line, ch: lastMatchPart[1] };
+						let lookBack = editor.getRange(from, to);
+						if (lookBack === lhs) {
+							editor.replaceRange(this.searchSnippets[lhs], from, to);
+							return true;
+						}
+					}
+					// snippet before cursor found but not triggered means no other snippet should trigger
+					return false;
 				}
 			}
 		}
-        return false;
+		return false;
 	}
 }
 
@@ -324,7 +338,10 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 				dropdown
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
 					// .addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
-					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
+					.addOption(
+						AutoTriggerOptions.EnabledYesWS,
+						"Enabled, also whitespace",
+					)
 					.setValue(this.plugin.settings.triggerOnSpace)
 					.onChange(async (value) => {
 						this.plugin.settings.triggerOnSpace = value as AutoTriggerOptions;
@@ -341,7 +358,10 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 				dropdown
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
 					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
-					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
+					.addOption(
+						AutoTriggerOptions.EnabledYesWS,
+						"Enabled, also whitespace",
+					)
 					.setValue(this.plugin.settings.triggerOnEnter)
 					.onChange(async (value) => {
 						this.plugin.settings.triggerOnEnter = value as AutoTriggerOptions;
@@ -358,7 +378,10 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 				dropdown
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
 					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
-					.addOption(AutoTriggerOptions.EnabledYesWS, "Enabled, also whitespace")
+					.addOption(
+						AutoTriggerOptions.EnabledYesWS,
+						"Enabled, also whitespace",
+					)
 					.setValue(this.plugin.settings.triggerOnTab)
 					.onChange(async (value) => {
 						this.plugin.settings.triggerOnTab = value as AutoTriggerOptions;
@@ -367,4 +390,3 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			);
 	}
 }
-
