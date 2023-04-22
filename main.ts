@@ -281,9 +281,11 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Jelly Snippets - Settings" });
+		let childEl = containerEl.createDiv({ cls: "jelly_snippets" });
+		
+		childEl.createEl("h2", { text: "Jelly Snippets - Settings" });
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Search Snippets")
 			.setDesc(
 				"Specify your search snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability.",
@@ -301,7 +303,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Snippet line divider")
 			.setDesc("This string will divide each separate snippet definition.")
 			.addText((text) =>
@@ -314,7 +316,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Snippet part divider")
 			.setDesc(
 				"This string will divide the lhs and rhs of a snippet definition. (I recommend putting spaces in the ends of this string.)",
@@ -329,7 +331,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Trigger on Space")
 			.setDesc(
 				"If enabled, the snippet function will trigger when space is pressed (but not while shift is held).",
@@ -349,7 +351,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Trigger on Enter")
 			.setDesc(
 				"If enabled, the snippet function will trigger when enter is pressed (but not while shift is held).",
@@ -369,7 +371,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
+		new Setting(childEl)
 			.setName("Trigger on Tab")
 			.setDesc(
 				"If enabled, the snippet function will trigger when tab is pressed (but not while shift is held).",

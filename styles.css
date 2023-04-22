@@ -1,0 +1,8 @@
+
+.jelly_snippets textarea {
+  resize: both;
+  min-width: 15ch;
+  min-height: 20ch;
+  width: 50ch;
+  height: 35ch;
+}
