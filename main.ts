@@ -142,13 +142,18 @@ export default class JellySnippets extends Plugin {
 	}
 
 	parseSearchSnippets(): void {
+		// If they specified newline control character, split snippets by newline
+		let snippetDivider =
+			this.settings.snippetDivider == "\\n"
+				? "\n"
+				: this.settings.snippetDivider;
+
 		// go through the search snippets file, split by the snippet divider, split by the part divider, put in map
-		let snippetLines = this.settings.searchSnippetsFile.split(
-			this.settings.snippetDivider
-		);
+		let snippetLines =
+			this.settings.searchSnippetsFile.split(snippetDivider);
 		for (let snippet of snippetLines) {
 			// trim() is used so that each snippet line does not retain newlines.
-			// TODO: Add the newline symbol for dividers.
+			// TODO: Again, control characters or semantic symbols in lhs.
 			let snippetParts = snippet
 				.trim()
 				.split(this.settings.snippetPartDivider);
@@ -335,7 +340,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		new Setting(childEl)
 			.setName("Snippet line divider")
 			.setDesc(
-				"This string will divide each separate snippet definition."
+				"This string will divide each separate snippet definition. (Enter the two characters '\\n' to use newlines as your separator.)"
 			)
 			.addText((text) =>
 				text
