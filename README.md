@@ -76,13 +76,13 @@ It's since been incorporated back into [julia.vim](https://github.com/JuliaEdito
 
 ## Future Improvements/TODO
 
-- Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
-- Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
-- Regex capabilities
-- Bugfixes and auditing?
-- Add newline option for snippet definition to make simple snippets easy rather than cumbersome
-- Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo. (one half done)
+-[ ] Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
+-[ ] Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
+-[ ] Regex capabilities
+-[ ] Bugfixes and auditing?
+-[x] Add newline option for snippet definition to make simple snippets easy rather than cumbersome
+-[ ] Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo. (one half done)
 
 ### Other caveats
 
-- The lhs of a snippet cannot have newlines in it. Snippets of that sort will simply fail to work; they'll register but never trigger. The reason why is because I only search from cursor to start of line for snippet text; this is efficient and simple. To fix, we'd have to look backwards from the cursor position and match with the lhs of the snippet. Probably not a hard update, but given that this use case is somewhat rare (imo), I have neglected it. Do submit an issue.
+- The lhs of a snippet (currently) cannot have newlines in it. Snippets of that sort will simply fail to work; they'll register but never trigger. The reason why is because I only search from cursor to start of line for snippet text; this is efficient and simple. To fix, we'd have to look backwards from the cursor position and match with the lhs of the snippet. Probably not a hard update, but given that this use case is somewhat rare (imo), I have neglected it. Do submit an issue. EDIT: the issue was submitted. Time to get to work.
