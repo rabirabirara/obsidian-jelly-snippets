@@ -76,12 +76,12 @@ It's since been incorporated back into [julia.vim](https://github.com/JuliaEdito
 
 ## Future Improvements/TODO
 
--[ ] Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
--[ ] Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
--[ ] Regex capabilities
--[ ] Bugfixes and auditing?
--[x] Add newline option for snippet definition to make simple snippets easy rather than cumbersome
--[ ] Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo. (one half done)
+- [ ] Control characters in snippets (e.g. whitespace, particularly newlines? currently snippets are trimmed on both ends; should probably not trim spaces)
+- [ ] Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
+- [ ] Regex capabilities
+- [ ] Bugfixes and auditing?
+- [x] Add newline option for snippet definition to make simple snippets easy rather than cumbersome
+- [ ] Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo. (one half done)
 
 ### Other caveats
 
