@@ -82,7 +82,10 @@ export default class JellySnippets extends Plugin {
 				) {
 					const mdFile = this.app.workspace.activeEditor;
 					if (mdFile?.editor) {
-						this.triggerSearchSnippetAutomatically(mdFile.editor, evt);
+						this.triggerSearchSnippetAutomatically(
+							mdFile.editor,
+							evt
+						);
 					}
 				}
 			};
@@ -94,7 +97,7 @@ export default class JellySnippets extends Plugin {
 			this.registerEvent(
 				this.app.workspace.on("window-open", (event) => {
 					this.registerDomEvent(activeWindow, "keydown", onKeyEvent);
-				}),
+				})
 			);
 		}
 
@@ -120,7 +123,11 @@ export default class JellySnippets extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async saveSettings() {
@@ -137,12 +144,14 @@ export default class JellySnippets extends Plugin {
 	parseSearchSnippets(): void {
 		// go through the search snippets file, split by the snippet divider, split by the part divider, put in map
 		let snippetLines = this.settings.searchSnippetsFile.split(
-			this.settings.snippetDivider,
+			this.settings.snippetDivider
 		);
 		for (let snippet of snippetLines) {
 			// trim() is used so that each snippet line does not retain newlines.
 			// TODO: Add the newline symbol for dividers.
-			let snippetParts = snippet.trim().split(this.settings.snippetPartDivider);
+			let snippetParts = snippet
+				.trim()
+				.split(this.settings.snippetPartDivider);
 			let lhs = snippetParts.shift();
 			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
@@ -174,7 +183,9 @@ export default class JellySnippets extends Plugin {
 		// remember the order: enter and tab come out before code triggers, space comes out after.
 		switch (evt.key) {
 			case " ": {
-				if (this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled) {
+				if (
+					this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled
+				) {
 					if (this.triggerSearchSnippet(editor)) {
 						// TODO: actually provide autotriggeroptions for Space.
 						// Currently impossible to undo the space because the entire snippet
@@ -185,9 +196,14 @@ export default class JellySnippets extends Plugin {
 				break;
 			}
 			case "Tab": {
-				if (this.settings.triggerOnTab !== AutoTriggerOptions.Disabled) {
+				if (
+					this.settings.triggerOnTab !== AutoTriggerOptions.Disabled
+				) {
 					if (this.triggerSearchSnippet(editor)) {
-						if (this.settings.triggerOnTab === AutoTriggerOptions.EnabledNoWS) {
+						if (
+							this.settings.triggerOnTab ===
+							AutoTriggerOptions.EnabledNoWS
+						) {
 							editor.exec("indentLess");
 						}
 						return true;
@@ -196,15 +212,21 @@ export default class JellySnippets extends Plugin {
 				break;
 			}
 			case "Enter": {
-				if (this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled) {
+				if (
+					this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled
+				) {
 					// TODO: Could be inefficient. Profiling needed?
 					let curpos = editor.getCursor();
 					let aboveline = curpos.line - 1;
 					let abovelineEnd = editor.getLine(aboveline).length;
-					let peekPos: EditorPosition = { line: aboveline, ch: abovelineEnd };
+					let peekPos: EditorPosition = {
+						line: aboveline,
+						ch: abovelineEnd,
+					};
 					if (this.triggerSearchSnippet(editor, peekPos)) {
 						if (
-							this.settings.triggerOnEnter === AutoTriggerOptions.EnabledNoWS
+							this.settings.triggerOnEnter ===
+							AutoTriggerOptions.EnabledNoWS
 						) {
 							// undo the already created newline by deleting everything from curpos to above line's end
 							// yes, you need to recalculate the above line's end else it will use an incorrect position
@@ -229,7 +251,7 @@ export default class JellySnippets extends Plugin {
 
 	triggerSearchSnippet(
 		editor: Editor,
-		pos: EditorPosition | null = null,
+		pos: EditorPosition | null = null
 	): boolean {
 		// uses prepareSimpleSearch to search for matches that end right at cursor.
 		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
@@ -242,7 +264,7 @@ export default class JellySnippets extends Plugin {
 			let searchResult = search(curLineText);
 			if (searchResult) {
 				let lastMatchPart = searchResult.matches.find(
-					(part) => part[1] === curpos.ch,
+					(part) => part[1] === curpos.ch
 				);
 				if (lastMatchPart) {
 					if (curpos.ch >= lhs.length) {
@@ -252,10 +274,17 @@ export default class JellySnippets extends Plugin {
 							line: line,
 							ch: curpos.ch - lhs.length,
 						};
-						let to: EditorPosition = { line: line, ch: lastMatchPart[1] };
+						let to: EditorPosition = {
+							line: line,
+							ch: lastMatchPart[1],
+						};
 						let lookBack = editor.getRange(from, to);
 						if (lookBack === lhs) {
-							editor.replaceRange(this.searchSnippets[lhs], from, to);
+							editor.replaceRange(
+								this.searchSnippets[lhs],
+								from,
+								to
+							);
 							return true;
 						}
 					}
@@ -282,30 +311,32 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		let childEl = containerEl.createDiv({ cls: "jelly_snippets" });
-		
+
 		childEl.createEl("h2", { text: "Jelly Snippets - Settings" });
 
 		new Setting(childEl)
 			.setName("Search Snippets")
 			.setDesc(
-				"Specify your search snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability.",
+				"Specify your search snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability."
 			)
 			.addTextArea((textarea) =>
 				textarea
 					.setPlaceholder(
-						`before${this.plugin.settings.snippetPartDivider}after`,
+						`before${this.plugin.settings.snippetPartDivider}after`
 					)
 					.setValue(this.plugin.settings.searchSnippetsFile)
 					.onChange(async (value) => {
 						this.plugin.settings.searchSnippetsFile = value;
 						await this.plugin.saveSettings();
 						this.plugin.reloadSearchSnippets(); // ? is this necessary to update the snippets?
-					}),
+					})
 			);
 
 		new Setting(childEl)
 			.setName("Snippet line divider")
-			.setDesc("This string will divide each separate snippet definition.")
+			.setDesc(
+				"This string will divide each separate snippet definition."
+			)
 			.addText((text) =>
 				text
 					.setPlaceholder("-==-")
@@ -313,13 +344,13 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.snippetDivider = value;
 						await this.plugin.saveSettings();
-					}),
+					})
 			);
 
 		new Setting(childEl)
 			.setName("Snippet part divider")
 			.setDesc(
-				"This string will divide the lhs and rhs of a snippet definition. (I recommend putting spaces in the ends of this string.)",
+				"This string will divide the lhs and rhs of a snippet definition. (I recommend putting spaces in the ends of this string.)"
 			)
 			.addText((text) =>
 				text
@@ -328,13 +359,13 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.snippetPartDivider = value;
 						await this.plugin.saveSettings();
-					}),
+					})
 			);
 
 		new Setting(childEl)
 			.setName("Trigger on Space")
 			.setDesc(
-				"If enabled, the snippet function will trigger when space is pressed (but not while shift is held).",
+				"If enabled, the snippet function will trigger when space is pressed (but not while shift is held)."
 			)
 			.addDropdown((dropdown) =>
 				dropdown
@@ -342,53 +373,62 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					// .addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace",
+						"Enabled, also whitespace"
 					)
 					.setValue(this.plugin.settings.triggerOnSpace)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnSpace = value as AutoTriggerOptions;
+						this.plugin.settings.triggerOnSpace =
+							value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
-					}),
+					})
 			);
 
 		new Setting(childEl)
 			.setName("Trigger on Enter")
 			.setDesc(
-				"If enabled, the snippet function will trigger when enter is pressed (but not while shift is held).",
+				"If enabled, the snippet function will trigger when enter is pressed (but not while shift is held)."
 			)
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
-					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
+					.addOption(
+						AutoTriggerOptions.EnabledNoWS,
+						"Enabled, no whitespace"
+					)
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace",
+						"Enabled, also whitespace"
 					)
 					.setValue(this.plugin.settings.triggerOnEnter)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnEnter = value as AutoTriggerOptions;
+						this.plugin.settings.triggerOnEnter =
+							value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
-					}),
+					})
 			);
 
 		new Setting(childEl)
 			.setName("Trigger on Tab")
 			.setDesc(
-				"If enabled, the snippet function will trigger when tab is pressed (but not while shift is held).",
+				"If enabled, the snippet function will trigger when tab is pressed (but not while shift is held)."
 			)
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
-					.addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
+					.addOption(
+						AutoTriggerOptions.EnabledNoWS,
+						"Enabled, no whitespace"
+					)
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace",
+						"Enabled, also whitespace"
 					)
 					.setValue(this.plugin.settings.triggerOnTab)
 					.onChange(async (value) => {
-						this.plugin.settings.triggerOnTab = value as AutoTriggerOptions;
+						this.plugin.settings.triggerOnTab =
+							value as AutoTriggerOptions;
 						await this.plugin.saveSettings();
-					}),
+					})
 			);
 	}
 }
