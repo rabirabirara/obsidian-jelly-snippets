@@ -267,36 +267,35 @@ export default class JellySnippets extends Plugin {
 
 		for (let [lhs, search] of Object.entries(this.searches)) {
 			let searchResult = search(curLineText);
-			if (searchResult) {
-				let lastMatchPart = searchResult.matches.find(
-					(part) => part[1] === curpos.ch
-				);
-				if (lastMatchPart) {
-					if (curpos.ch >= lhs.length) {
-						// TODO: This change fixes old bug but snippet now triggers even if there is no whitespace before the lhs. Or does it? Verify this...
-						// TODO: lhs still cannot have newlines in it. Wouldn't be hard to update however.
-						let from: EditorPosition = {
-							line: line,
-							ch: curpos.ch - lhs.length,
-						};
-						let to: EditorPosition = {
-							line: line,
-							ch: lastMatchPart[1],
-						};
-						let lookBack = editor.getRange(from, to);
-						if (lookBack === lhs) {
-							editor.replaceRange(
-								this.searchSnippets[lhs],
-								from,
-								to
-							);
-							return true;
-						}
-					}
-					// snippet before cursor found but not triggered means no other snippet should trigger
-					return false;
+			if (!searchResult) {
+				continue;
+			}
+
+			let lastMatchPart = searchResult.matches.find(
+				(part) => part[1] === curpos.ch
+			);
+			if (!lastMatchPart) {
+				continue;
+			}
+			if (curpos.ch >= lhs.length) {
+				// TODO: This change fixes old bug but snippet now triggers even if there is no whitespace before the lhs. Or does it? Verify this...
+				// TODO: lhs still cannot have newlines in it. Wouldn't be hard to update however.
+				let from: EditorPosition = {
+					line: line,
+					ch: curpos.ch - lhs.length,
+				};
+				let to: EditorPosition = {
+					line: line,
+					ch: lastMatchPart[1],
+				};
+				let lookBack = editor.getRange(from, to);
+				if (lookBack === lhs) {
+					editor.replaceRange(this.searchSnippets[lhs], from, to);
+					return true;
 				}
 			}
+			// snippet before cursor found but not triggered means no other snippet should trigger
+			return false;
 		}
 		return false;
 	}
