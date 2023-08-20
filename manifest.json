@@ -1,9 +1,9 @@
 {
 	"id": "jelly-snippets",
 	"name": "Jelly Snippets",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"minAppVersion": "0.15.0",
-	"description": "This plugin implements text snippets: replace text after typing a snippet on some trigger or command.",
+	"description": "A simple plugin for text snippets, with auto replacement",
 	"author": "Spencer Gouw",
 	"authorUrl": "github.com/rabirabirara",
 	"isDesktopOnly": false
