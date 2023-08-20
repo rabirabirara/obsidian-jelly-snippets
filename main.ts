@@ -5,8 +5,6 @@ import {
 	MarkdownView,
 	Plugin,
 	PluginSettingTab,
-	prepareSimpleSearch,
-	SearchResult,
 	Setting,
 } from "obsidian";
 
@@ -16,36 +14,39 @@ enum AutoTriggerOptions {
 	EnabledYesWS = "y-ws",
 }
 
+enum SnippetType {
+	SLSR = 0,
+	SLMR = 1,
+	MLSR = 2,
+	MLMR = 3,
+}
+
 interface JellySnippetsSettings {
-	searchSnippetsFile: string;
-	// regexSnippetsFile: string;
-	// regexSnippets: [RegExp, string][];
+	snippetsFile: string;
 	triggerOnSpace: AutoTriggerOptions;
 	triggerOnEnter: AutoTriggerOptions;
 	triggerOnTab: AutoTriggerOptions;
 	snippetPartDivider: string;
 	snippetDivider: string;
-	postSnippetCursorSymbol: string;
+	// postSnippetCursorSymbol: string; // TODO
 }
 // TODO: implement cursor move after snippet replace.
 // ? TODO: Can we implement growable lists in settings?
 
 const DEFAULT_SETTINGS: JellySnippetsSettings = {
-	searchSnippetsFile: String.raw`Snip me! |+| Snippet successfully replaced.
+	snippetsFile: String.raw`Snip me! |+| Snippet successfully replaced.
 -==-
 - |+| #####
 -==-
 : |+| -
 -==-
 :: |+| hi`,
-	// regexSnippetsFile: "",,
-	// regexSnippets: [[new RegExp("^.*asd"), "asdf"]],
 	triggerOnSpace: AutoTriggerOptions.Disabled,
 	triggerOnEnter: AutoTriggerOptions.Disabled,
 	triggerOnTab: AutoTriggerOptions.Disabled,
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
-	postSnippetCursorSymbol: "%move%", // TODO: Actually implement this symbol.
+	// postSnippetCursorSymbol: "%move%", // TODO: Actually implement this symbol.
 };
 
 // TODO: Add semantic symbols to represent certain special characters.
@@ -60,15 +61,14 @@ The thing about regex snippets is that the more power we want to add, the harder
 
 export default class JellySnippets extends Plugin {
 	settings: JellySnippetsSettings;
-	private searchSnippets: { [key: string]: string } = {};
-	private searches: { [key: string]: (text: string) => SearchResult | null } =
-		{};
+	private multilineSnippets: { [key: string]: string } = {};
 
 	async onload() {
 		await this.loadSettings();
+		console.log("load");
 
-		// Check settings and load search snippets in.
-		this.reloadSearchSnippets();
+		// Check settings and load snippets in.
+		this.reloadSnippets();
 
 		// If keydown events are set...
 		if (
@@ -82,10 +82,7 @@ export default class JellySnippets extends Plugin {
 				) {
 					const mdFile = this.app.workspace.activeEditor;
 					if (mdFile?.editor) {
-						this.triggerSearchSnippetAutomatically(
-							mdFile.editor,
-							evt
-						);
+						this.triggerSnippetAutomatically(mdFile.editor, evt);
 					}
 				}
 			};
@@ -100,12 +97,13 @@ export default class JellySnippets extends Plugin {
 				})
 			);
 		}
+		console.log("load 2");
 
 		this.addCommand({
-			id: "trigger-search-snippet",
-			name: "Trigger search snippet",
+			id: "trigger-snippet",
+			name: "Trigger snippet",
 			editorCallback: (editor: Editor) => {
-				this.triggerSearchSnippet(editor);
+				this.triggerSnippet(editor);
 			},
 		});
 
@@ -113,7 +111,7 @@ export default class JellySnippets extends Plugin {
 			id: "reload-snippets",
 			name: "Reload snippets",
 			callback: () => {
-				this.reloadSearchSnippets();
+				this.reloadSnippets();
 			},
 		});
 
@@ -134,64 +132,57 @@ export default class JellySnippets extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	reloadSearchSnippets(): void {
-		this.searchSnippets = {};
-		this.searches = {};
-		this.parseSearchSnippets();
-		this.prepareSearchesForSearchSnippets();
+	reloadSnippets(): void {
+		console.log("reloading");
+		this.multilineSnippets = {};
+		this.parseSnippets();
 	}
 
-	parseSearchSnippets(): void {
-		// If they specified newline control character, split snippets by newline
+	parseSnippets(): void {
+		// If they specified newline control character, split snippets by newline.
+		// ! If so, there can be no multiline snippets!
 		let snippetDivider =
 			this.settings.snippetDivider == "\\n"
 				? "\n"
 				: this.settings.snippetDivider;
 
-		// go through the search snippets file, split by the snippet divider, split by the part divider, put in map
-		let snippetLines =
-			this.settings.searchSnippetsFile.split(snippetDivider);
+		// go through the snippets file, split by the snippet divider, split by the part divider, put in map
+		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
 		for (let snippet of snippetLines) {
 			// trim() is used so that each snippet line does not retain newlines.
 			// TODO: Again, control characters or semantic symbols in lhs.
+
 			let snippetParts = snippet
 				.trim()
 				.split(this.settings.snippetPartDivider);
 			let lhs = snippetParts.shift();
+			console.log(lhs);
 			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
-				console.log("Failed to register search snippet: ", snippet);
+				console.log("Failed to register snippet: ", snippet);
 			} else {
-				this.searchSnippets[lhs] = rhs;
+				this.multilineSnippets[lhs] = rhs;
 			}
 		}
+		console.log(this.multilineSnippets);
 	}
 
-	prepareSearchesForSearchSnippets(): void {
-		// for each snippet loaded, prepare a simple search.
-		for (let key in this.searchSnippets) {
-			this.searches[key] = prepareSimpleSearch(key);
-		}
+	triggerSnippet(
+		editor: Editor,
+		pos?: EditorPosition
+	): [string, string] | undefined {
+		let curpos = pos ? pos : editor.getCursor();
+		return this.triggerMultilineSnippet(editor, curpos);
 	}
 
-	// triggerRegexSnippet(editor: Editor): void {
-	// 	let curpos = editor.getCursor();
-	// 	let startOfLine = curpos;
-	// 	startOfLine.ch = 0;
-	// 	let lhs = editor.getRange(startOfLine, curpos);
-	// 	// go through the regex snippets and check if any of the regexes match.
-	// 	// * Constraint: maybe shift the responsibility on the user to write regexes that match all the beginning.
-	// 	// e.g. "^.*([\s:/.,-])asd" would match an asd that comes right after a word delimiter/whitespace and any number of characters.
-	// }
-
-	triggerSearchSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
+	triggerSnippetAutomatically(editor: Editor, evt: KeyboardEvent) {
 		// remember the order: enter and tab come out before code triggers, space comes out after.
 		switch (evt.key) {
 			case " ": {
 				if (
 					this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled
 				) {
-					if (this.triggerSearchSnippet(editor)) {
+					if (this.triggerSnippet(editor)) {
 						// TODO: actually provide autotriggeroptions for Space.
 						// Currently impossible to undo the space because the entire snippet
 						// and all this code triggers before the space actually happens.
@@ -202,50 +193,92 @@ export default class JellySnippets extends Plugin {
 			}
 			case "Tab": {
 				if (
-					this.settings.triggerOnTab !== AutoTriggerOptions.Disabled
+					this.settings.triggerOnTab === AutoTriggerOptions.Disabled
 				) {
-					if (this.triggerSearchSnippet(editor)) {
+					return false;
+				}
+				editor.exec("indentLess");
+				let maybeSnippet = this.triggerSnippet(editor);
+				if (maybeSnippet) {
+					if (
+						this.settings.triggerOnTab ===
+						AutoTriggerOptions.EnabledYesWS
+					) {
 						if (
-							this.settings.triggerOnTab ===
-							AutoTriggerOptions.EnabledNoWS
+							this.getSnippetType(maybeSnippet) ===
+							SnippetType.SLSR
 						) {
-							editor.exec("indentLess");
+							editor.exec("indentMore");
 						}
-						return true;
 					}
+					return true;
+				} else {
+					// If no snippet was triggered, restore the user's indent!
+					editor.exec("indentMore");
 				}
 				break;
 			}
 			case "Enter": {
 				if (
-					this.settings.triggerOnEnter !== AutoTriggerOptions.Disabled
+					this.settings.triggerOnEnter === AutoTriggerOptions.Disabled
 				) {
-					// TODO: Could be inefficient. Profiling needed?
-					let curpos = editor.getCursor();
-					let aboveline = curpos.line - 1;
-					let abovelineEnd = editor.getLine(aboveline).length;
-					let peekPos: EditorPosition = {
-						line: aboveline,
-						ch: abovelineEnd,
-					};
-					if (this.triggerSearchSnippet(editor, peekPos)) {
-						if (
-							this.settings.triggerOnEnter ===
-							AutoTriggerOptions.EnabledNoWS
-						) {
-							// undo the already created newline by deleting everything from curpos to above line's end
-							// yes, you need to recalculate the above line's end else it will use an incorrect position
-							let aboveLine = editor.getCursor().line - 1;
-							let aboveLineEnd = editor.getLine(aboveLine).length;
-							let aboveLineEndPos: EditorPosition = {
-								line: aboveLine,
-								ch: aboveLineEnd,
-							};
-							editor.replaceRange("", aboveLineEndPos, curpos);
-						}
-						return true;
-					}
+					return false;
 				}
+				// Since the newline comes out first, we need to track where our old position was before newline.
+				let curpos = editor.getCursor();
+				let aboveline = curpos.line - 1;
+				let abovelineEnd = editor.getLine(aboveline).length;
+				let peekPos: EditorPosition = {
+					line: aboveline,
+					ch: abovelineEnd,
+				};
+				let maybeSnippet = this.triggerSnippet(editor, peekPos);
+				if (maybeSnippet) {
+					let snippetType = this.getSnippetType(maybeSnippet);
+					if (
+						this.settings.triggerOnEnter ===
+						AutoTriggerOptions.EnabledNoWS
+					) {
+						// NoWS
+						if (snippetType === SnippetType.MLSR) {
+							// RCNN - do nothing
+						} else {
+							// RCNDMU - delete from curpos to start of next line
+							let curpos = editor.getCursor();
+							let nextLine = curpos.line + 1;
+							let nextLineStartPos: EditorPosition = {
+								line: nextLine,
+								ch: 0,
+							};
+							editor.replaceRange("", curpos, nextLineStartPos);
+						}
+					} else {
+						// YesWS
+						let curpos = editor.getCursor();
+						if (snippetType === SnippetType.MLSR) {
+							// RCNN - insert newline ("repeat enter") / replace curpos with  newline
+							editor.exec("newlineAndIndent");
+							editor.exec("indentLess");
+						} else {
+							// RCNDMU - move to start of next line / to the right
+							editor.exec("goRight");
+
+							// * To calculate it:
+							// let nextLine = curpos.line + 1;
+							// let nextLineStartPos: EditorPosition = {
+							// 	line: nextLine,
+							// 	ch: 0,
+							// };
+							// editor.setCursor(nextLineStartPos);
+						}
+					}
+
+					return true;
+				} else {
+					// Didn't trigger; move the cursor back down
+					editor.setCursor(curpos);
+				}
+				break;
 			}
 			default: {
 				break;
@@ -254,50 +287,77 @@ export default class JellySnippets extends Plugin {
 		return false;
 	}
 
-	triggerSearchSnippet(
+	triggerMultilineSnippet(
 		editor: Editor,
-		pos: EditorPosition | null = null
-	): boolean {
-		// uses prepareSimpleSearch to search for matches that end right at cursor.
-		// basically, get text from start of line to cursor, do simple search for each snippet lhs in that text, and replace first match that ends right at cursor.
+		pos?: EditorPosition
+	): [string, string] | undefined {
+		const curpos = pos ? pos : editor.getCursor();
 
-		let curpos = pos ? pos : editor.getCursor();
-		let line = curpos.line;
-		let curLineText = editor.getLine(line);
-
-		for (let [lhs, search] of Object.entries(this.searches)) {
-			let searchResult = search(curLineText);
-			if (!searchResult) {
+		for (let [lhs, rhs] of Object.entries(this.multilineSnippets)) {
+			if (!this.selectBackN(editor, lhs.length, curpos)) {
+				// console.log(
+				// 	"Error: failed to select back N at: " +
+				// 		pos +
+				// 		" with lhs: " +
+				// 		lhs
+				// );
 				continue;
 			}
 
-			let lastMatchPart = searchResult.matches.find(
-				(part) => part[1] === curpos.ch
-			);
-			if (!lastMatchPart) {
-				continue;
+			// If the selected string is the LHS, replace it!
+			let selected = editor.getSelection();
+			if (lhs === selected) {
+				editor.replaceSelection(rhs);
+
+				// Reset selection to where the cursor is *after* replacement.
+				// Allows "enabled-with-whitespace" auto replacements to work.
+				this.unselect(editor);
+				return [lhs, rhs];
 			}
-			if (curpos.ch >= lhs.length) {
-				// TODO: This change fixes old bug but snippet now triggers even if there is no whitespace before the lhs. Or does it? Verify this...
-				// TODO: lhs still cannot have newlines in it. Wouldn't be hard to update however.
-				let from: EditorPosition = {
-					line: line,
-					ch: curpos.ch - lhs.length,
-				};
-				let to: EditorPosition = {
-					line: line,
-					ch: lastMatchPart[1],
-				};
-				let lookBack = editor.getRange(from, to);
-				if (lookBack === lhs) {
-					editor.replaceRange(this.searchSnippets[lhs], from, to);
-					return true;
-				}
-			}
-			// snippet before cursor found but not triggered means no other snippet should trigger
+
+			// Reset selection to where the cursor is.
+			this.unselect(editor, curpos);
+		}
+
+		return;
+	}
+
+	// Motivation:
+	// Single snippets (no newlines) and multi snippets (newlines)
+	// have different, weird interaction with Obsidian. Sometimes the whitespace goes through, sometimes not.
+	// There needs to be a way of determining what type (mlhs->srhs? mlhs->mrhs? slhs? srhs? etc.) a snippet is.
+	getSnippetType(snippet: [string, string]): SnippetType {
+		let [lhs, rhs] = snippet;
+		let type = SnippetType.SLSR;
+		// Compiler doesn't complain if we convert boolean to number with unary '+'.
+		type |= +lhs.contains("\n") && SnippetType.MLSR;
+		type |= +rhs.contains("\n") && SnippetType.SLMR;
+		return type;
+	}
+
+	selectBackN(editor: Editor, N: number, pos?: EditorPosition): boolean {
+		const curpos = pos ? pos : editor.getCursor();
+
+		// pos -> offset; offset - N; offsetToPos; select offsets
+		let endOffset = editor.posToOffset(curpos);
+		let startOffset = endOffset - N;
+
+		// If we can't select back N because we are too close to the start:
+		if (startOffset < 0) {
 			return false;
 		}
-		return false;
+
+		// * In selection terms, anchor is where you first click and head is where you drag to.
+		// Try to keep head at the end position and anchor at the start.
+		let startPos = editor.offsetToPos(startOffset);
+		let endPos = editor.offsetToPos(endOffset);
+		editor.setSelection(startPos, endPos);
+		return true;
+	}
+
+	unselect(editor: Editor, pos?: EditorPosition) {
+		if (pos) editor.setSelection(pos, pos);
+		else editor.setSelection(editor.getCursor(), editor.getCursor());
 	}
 }
 
@@ -319,20 +379,20 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 		childEl.createEl("h2", { text: "Jelly Snippets - Settings" });
 
 		new Setting(childEl)
-			.setName("Search Snippets")
+			.setName("Snippets")
 			.setDesc(
-				"Specify your search snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability."
+				"Specify your snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability."
 			)
 			.addTextArea((textarea) =>
 				textarea
 					.setPlaceholder(
 						`before${this.plugin.settings.snippetPartDivider}after`
 					)
-					.setValue(this.plugin.settings.searchSnippetsFile)
+					.setValue(this.plugin.settings.snippetsFile)
 					.onChange(async (value) => {
-						this.plugin.settings.searchSnippetsFile = value;
+						this.plugin.settings.snippetsFile = value;
 						await this.plugin.saveSettings();
-						this.plugin.reloadSearchSnippets(); // ? is this necessary to update the snippets?
+						this.plugin.reloadSnippets(); // ? is this necessary to update the snippets?
 					})
 			);
 
@@ -377,7 +437,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					// .addOption(AutoTriggerOptions.EnabledNoWS, "Enabled, no whitespace")
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace"
+						"Enabled, also space"
 					)
 					.setValue(this.plugin.settings.triggerOnSpace)
 					.onChange(async (value) => {
@@ -397,11 +457,11 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
 					.addOption(
 						AutoTriggerOptions.EnabledNoWS,
-						"Enabled, no whitespace"
+						"Enabled, no newline"
 					)
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace"
+						"Enabled, also newline"
 					)
 					.setValue(this.plugin.settings.triggerOnEnter)
 					.onChange(async (value) => {
@@ -421,11 +481,11 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 					.addOption(AutoTriggerOptions.Disabled, "Disabled")
 					.addOption(
 						AutoTriggerOptions.EnabledNoWS,
-						"Enabled, no whitespace"
+						"Enabled, no indent"
 					)
 					.addOption(
 						AutoTriggerOptions.EnabledYesWS,
-						"Enabled, also whitespace"
+						"Enabled, also indent on simple snippets (no newlines)"
 					)
 					.setValue(this.plugin.settings.triggerOnTab)
 					.onChange(async (value) => {
