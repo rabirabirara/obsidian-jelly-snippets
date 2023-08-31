@@ -148,22 +148,24 @@ export default class JellySnippets extends Plugin {
 
 		// go through the snippets file, split by the snippet divider, split by the part divider, put in map
 		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
-		for (let snippet of snippetLines) {
-			// trim() is used so that each snippet line does not retain newlines.
-			// TODO: Again, control characters or semantic symbols in lhs.
-
-			let snippetParts = snippet
-				.trim()
-				.split(this.settings.snippetPartDivider);
+		snippetLines.forEach((snippet, index) => {
+			// All but first should trim left newline, all but last should trim right newline.
+			if (index !== 0) {
+				snippet = snippet.slice(1, undefined);
+			}
+			if (index !== snippetLines.length - 1) {
+				snippet = snippet.slice(0, snippet.length - 1);
+			}
+			// // TODO: Again, control characters or semantic symbols in lhs.
+			let snippetParts = snippet.split(this.settings.snippetPartDivider);
 			let lhs = snippetParts.shift();
-			console.log(lhs);
 			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
 				console.log("Failed to register snippet: ", snippet);
 			} else {
 				this.multilineSnippets[lhs] = rhs;
 			}
-		}
+		});
 		console.log(this.multilineSnippets);
 	}
 
