@@ -55,7 +55,6 @@ export default class JellySnippets extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		console.log("load");
 
 		// Check settings and load snippets in.
 		this.reloadSnippets();
@@ -87,7 +86,6 @@ export default class JellySnippets extends Plugin {
 				})
 			);
 		}
-		console.log("load 2");
 
 		this.addCommand({
 			id: "trigger-snippet",
@@ -155,7 +153,6 @@ export default class JellySnippets extends Plugin {
 				this.multilineSnippets[lhs] = rhs;
 			}
 		});
-		console.log(this.multilineSnippets);
 	}
 
 	triggerSnippet(
