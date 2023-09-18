@@ -28,10 +28,7 @@ interface JellySnippetsSettings {
 	triggerOnTab: AutoTriggerOptions;
 	snippetPartDivider: string;
 	snippetDivider: string;
-	// postSnippetCursorSymbol: string; // TODO
 }
-// TODO: implement cursor move after snippet replace.
-// ? TODO: Can we implement growable lists in settings?
 
 const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	snippetsFile: String.raw`Snip me! |+| Snippet successfully replaced.
@@ -46,18 +43,11 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	triggerOnTab: AutoTriggerOptions.Disabled,
 	snippetPartDivider: " |+| ",
 	snippetDivider: "-==-",
-	// postSnippetCursorSymbol: "%move%", // TODO: Actually implement this symbol.
 };
 
 // TODO: Add semantic symbols to represent certain special characters.
 // TODO: Also implement those semantic symbols for control characters.
 // Specifically, allow me to add a "whitespace" symbol so that I can put newlines in snippets if I need.
-// TODO: I should use regexable snippets. Or at least implement it somehow somewhere.
-// regex: ^.*(all the whitespace, word delimiters)<snippet regex>
-/*
-The thing about regex snippets is that the more power we want to add, the harder it is to implement.
-! Also, need to test safety of regex... use safe-regex (npm)
-*/
 
 export default class JellySnippets extends Plugin {
 	settings: JellySnippetsSettings;
@@ -133,7 +123,7 @@ export default class JellySnippets extends Plugin {
 	}
 
 	reloadSnippets(): void {
-		console.log("reloading");
+		console.log("Jelly Snippets: Reloading snippets.");
 		this.multilineSnippets = {};
 		this.parseSnippets();
 	}
@@ -156,7 +146,6 @@ export default class JellySnippets extends Plugin {
 			if (index !== snippetLines.length - 1) {
 				snippet = snippet.slice(0, snippet.length - 1);
 			}
-			// // TODO: Again, control characters or semantic symbols in lhs.
 			let snippetParts = snippet.split(this.settings.snippetPartDivider);
 			let lhs = snippetParts.shift();
 			let rhs = snippetParts.join(this.settings.snippetPartDivider);
@@ -185,7 +174,6 @@ export default class JellySnippets extends Plugin {
 					this.settings.triggerOnSpace !== AutoTriggerOptions.Disabled
 				) {
 					if (this.triggerSnippet(editor)) {
-						// TODO: actually provide autotriggeroptions for Space.
 						// Currently impossible to undo the space because the entire snippet
 						// and all this code triggers before the space actually happens.
 						return true;
