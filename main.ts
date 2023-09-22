@@ -137,14 +137,10 @@ export default class JellySnippets extends Plugin {
 		// go through the snippets file, split by the snippet divider, split by the part divider, put in map
 		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
 		snippetLines.forEach((snippet, index) => {
-			// All but first should trim left newline, all but last should trim right newline.
-			if (index !== 0) {
-				snippet = snippet.slice(1, undefined);
-			}
-			if (index !== snippetLines.length - 1) {
-				snippet = snippet.slice(0, snippet.length - 1);
-			}
-			let snippetParts = snippet.split(this.settings.snippetPartDivider);
+			// Trim newlines. Instead, use symbols to let people insert whitespace.
+			let snippetParts = snippet
+				.trim()
+				.split(this.settings.snippetPartDivider);
 			let lhs = snippetParts.shift();
 			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
