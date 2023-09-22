@@ -136,12 +136,13 @@ export default class JellySnippets extends Plugin {
 		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
 		for (let snippet of snippetLines) {
 			// Trim newlines. Instead, use symbols to let people insert whitespace.
+			// This split means only the first division of the part divider is the LHS.
 			let snippetParts = snippet
 				.trim()
 				.split(this.settings.snippetPartDivider);
 			if (snippetParts.length !== 2) {
-				console.log("found more than 2 snippet parts: ");
-				console.log(snippetParts);
+				// probably an incomplete snippet
+				continue;
 			}
 			// Produce lhs. Continue if undefined.
 			let lhs = snippetParts.shift();
@@ -150,7 +151,8 @@ export default class JellySnippets extends Plugin {
 				continue;
 			}
 			// Produce rhs (raw data).
-			let rhsData = snippetParts.join(this.settings.snippetPartDivider); // why a join? because
+			// * This is a join in case they used their snippetPartDivider too many times.
+			let rhsData = snippetParts.join(this.settings.snippetPartDivider);
 			// Scan rhs for symbols and perform the replacements; acquire RHS.
 			let rhs = Symbol.replaceSymbolsOnParse(rhsData);
 			this.multilineSnippets[lhs] = rhs;
@@ -242,7 +244,7 @@ export default class JellySnippets extends Plugin {
 						// YesWS
 						let curpos = editor.getCursor();
 						if (snippetType === SnippetType.MLSR) {
-							// RCNN - insert newline ("repeat enter") / replace curpos with  newline
+							// RCNN - insert newline ("repeat enter") / replace curpos with newline
 							editor.exec("newlineAndIndent");
 							editor.exec("indentLess");
 						} else {
@@ -326,7 +328,7 @@ export default class JellySnippets extends Plugin {
 		let type = SnippetType.SLSR;
 		// Compiler doesn't complain if we convert boolean to number with unary '+'.
 		type |= +lhs.contains("\n") && SnippetType.MLSR;
-		type |= +rhs.data.contains("\n") && SnippetType.SLMR;
+		type |= +rhs.info.hasNewline && SnippetType.SLMR;
 		return type;
 	}
 

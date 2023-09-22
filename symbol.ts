@@ -22,6 +22,7 @@ export namespace Symbol {
 		let i = 0;
 		let cursor = 0;
 		let endFoundIdx = 0;
+		let hasNewline = false;
 		let found;
 		while (i < inputStr.length) {
 			found = false;
@@ -32,6 +33,9 @@ export namespace Symbol {
 					cursor += REPLACEABLE[symbol].length;
 					i += symbol.length;
 					found = true;
+					if (symbol == Symbol.Newline) {
+						hasNewline = true;
+					}
 					break;
 				}
 			}
@@ -50,6 +54,7 @@ export namespace Symbol {
 		}
 		let data = result.join("");
 		let info = {
+			hasNewline,
 			cursorEnd: data.length - endFoundIdx,
 		};
 
