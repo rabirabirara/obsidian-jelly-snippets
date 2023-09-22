@@ -8,6 +8,9 @@ import {
 	Setting,
 } from "obsidian";
 
+import { Symbol } from "symbol";
+import { LHS, RHS, Snippet } from "snippet";
+
 enum AutoTriggerOptions {
 	Disabled = "disabled",
 	EnabledNoWS = "n-ws",
@@ -45,13 +48,9 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	snippetDivider: "-==-",
 };
 
-// TODO: Add semantic symbols to represent certain special characters.
-// TODO: Also implement those semantic symbols for control characters.
-// Specifically, allow me to add a "whitespace" symbol so that I can put newlines in snippets if I need.
-
 export default class JellySnippets extends Plugin {
 	settings: JellySnippetsSettings;
-	private multilineSnippets: { [key: string]: string } = {};
+	private multilineSnippets: { [key: LHS]: RHS } = {};
 
 	async onload() {
 		await this.loadSettings();
@@ -128,7 +127,6 @@ export default class JellySnippets extends Plugin {
 
 	parseSnippets(): void {
 		// If they specified newline control character, split snippets by newline.
-		// ! If so, there can be no multiline snippets!
 		let snippetDivider =
 			this.settings.snippetDivider == "\\n"
 				? "\n"
@@ -136,25 +134,30 @@ export default class JellySnippets extends Plugin {
 
 		// go through the snippets file, split by the snippet divider, split by the part divider, put in map
 		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
-		snippetLines.forEach((snippet, index) => {
+		for (let snippet of snippetLines) {
 			// Trim newlines. Instead, use symbols to let people insert whitespace.
 			let snippetParts = snippet
 				.trim()
 				.split(this.settings.snippetPartDivider);
+			if (snippetParts.length !== 2) {
+				console.log("found more than 2 snippet parts: ");
+				console.log(snippetParts);
+			}
+			// Produce lhs. Continue if undefined.
 			let lhs = snippetParts.shift();
-			let rhs = snippetParts.join(this.settings.snippetPartDivider);
 			if (lhs === undefined) {
 				console.log("Failed to register snippet: ", snippet);
-			} else {
-				this.multilineSnippets[lhs] = rhs;
+				continue;
 			}
-		});
+			// Produce rhs (raw data).
+			let rhsData = snippetParts.join(this.settings.snippetPartDivider); // why a join? because
+			// Scan rhs for symbols and perform the replacements; acquire RHS.
+			let rhs = Symbol.replaceSymbolsOnParse(rhsData);
+			this.multilineSnippets[lhs] = rhs;
+		}
 	}
 
-	triggerSnippet(
-		editor: Editor,
-		pos?: EditorPosition
-	): [string, string] | undefined {
+	triggerSnippet(editor: Editor, pos?: EditorPosition): Snippet | undefined {
 		let curpos = pos ? pos : editor.getCursor();
 		return this.triggerMultilineSnippet(editor, curpos);
 	}
@@ -273,7 +276,7 @@ export default class JellySnippets extends Plugin {
 	triggerMultilineSnippet(
 		editor: Editor,
 		pos?: EditorPosition
-	): [string, string] | undefined {
+	): Snippet | undefined {
 		const curpos = pos ? pos : editor.getCursor();
 
 		for (let [lhs, rhs] of Object.entries(this.multilineSnippets)) {
@@ -290,12 +293,21 @@ export default class JellySnippets extends Plugin {
 			// If the selected string is the LHS, replace it!
 			let selected = editor.getSelection();
 			if (lhs === selected) {
-				editor.replaceSelection(rhs);
+				editor.replaceSelection(rhs.data);
 
 				// Reset selection to where the cursor is *after* replacement.
 				// Allows "enabled-with-whitespace" auto replacements to work.
 				this.unselect(editor);
-				return [lhs, rhs];
+
+				// Now move cursor back until it has reached end.
+				// * This may be obvious, but since I'm uncertain if setCursor can take an offset, I'm making an extra translation back to EditorPosition
+				editor.setCursor(
+					editor.offsetToPos(
+						editor.posToOffset(editor.getCursor()) -
+							rhs.info.cursorEnd
+					)
+				);
+				return { lhs, rhs };
 			}
 
 			// Reset selection to where the cursor is.
@@ -309,12 +321,12 @@ export default class JellySnippets extends Plugin {
 	// Single snippets (no newlines) and multi snippets (newlines)
 	// have different, weird interaction with Obsidian. Sometimes the whitespace goes through, sometimes not.
 	// There needs to be a way of determining what type (mlhs->srhs? mlhs->mrhs? slhs? srhs? etc.) a snippet is.
-	getSnippetType(snippet: [string, string]): SnippetType {
-		let [lhs, rhs] = snippet;
+	getSnippetType(snippet: Snippet): SnippetType {
+		let { lhs, rhs } = snippet;
 		let type = SnippetType.SLSR;
 		// Compiler doesn't complain if we convert boolean to number with unary '+'.
 		type |= +lhs.contains("\n") && SnippetType.MLSR;
-		type |= +rhs.contains("\n") && SnippetType.SLMR;
+		type |= +rhs.data.contains("\n") && SnippetType.SLMR;
 		return type;
 	}
 
