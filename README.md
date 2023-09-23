@@ -79,7 +79,7 @@ When you trigger the snippet, you'll end up with this:
 
 ```
 fn hello() {
-	|
+    |
 }
 ```
 
