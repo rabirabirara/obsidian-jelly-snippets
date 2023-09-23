@@ -4,6 +4,7 @@ export enum Symbol {
 	// on parse
 	Newline = "%\\n",
 	Tab = "%\\t",
+	Space = "%\\s",
 	// on replace
 	CursorEnd = "%\\e",
 }
@@ -12,6 +13,7 @@ export namespace Symbol {
 	const REPLACEABLE: Record<string, string> = {
 		[Symbol.Newline]: "\n",
 		[Symbol.Tab]: "\t",
+		[Symbol.Space]: " ",
 	};
 	// const ON_REPLACE: Record<string, string> = {
 	// 	[Symbol.CursorEnd]: "",
