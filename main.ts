@@ -254,6 +254,7 @@ export default class JellySnippets extends Plugin {
 						}
 					} else {
 						// YesWS
+						// * Only do these if the rhs has no complex cursor end.
 						let curpos = editor.getCursor();
 						if (snippetType === SnippetType.MLSR) {
 							// RCNN - insert newline ("repeat enter") / replace curpos with newline
@@ -328,6 +329,7 @@ export default class JellySnippets extends Plugin {
 			this.unselect(editor, curpos);
 		}
 
+		// No replace - return undefined
 		return;
 	}
 
