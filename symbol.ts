@@ -21,7 +21,7 @@ export namespace Symbol {
 		const len = inputStr.length;
 		let i = 0;
 		let cursor = 0;
-		let endFoundIdx = 0;
+		let endFoundIdx = -1;
 		let hasNewline = false;
 		let found;
 		while (i < inputStr.length) {
@@ -29,7 +29,6 @@ export namespace Symbol {
 			for (const symbol in REPLACEABLE) {
 				if (inputStr.startsWith(symbol, i)) {
 					result.push(REPLACEABLE[symbol]);
-					console.log(REPLACEABLE[symbol]);
 					cursor += REPLACEABLE[symbol].length;
 					i += symbol.length;
 					found = true;
@@ -55,7 +54,7 @@ export namespace Symbol {
 		let data = result.join("");
 		let info = {
 			hasNewline,
-			cursorEnd: data.length - endFoundIdx,
+			cursorEnd: endFoundIdx < 0 ? 0 : data.length - endFoundIdx,
 		};
 
 		return { data, info };
