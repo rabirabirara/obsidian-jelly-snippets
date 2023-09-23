@@ -212,7 +212,7 @@ export default class JellySnippets extends Plugin {
 				) {
 					return false;
 				}
-				// Since the newline comes out first, we need to track where our old position was before newline.
+				// Since the newline comes out first, we need to find our old position before newline (peekPos).
 				let curpos = editor.getCursor();
 				let aboveline = curpos.line - 1;
 				let abovelineEnd = editor.getLine(aboveline).length;
@@ -220,58 +220,43 @@ export default class JellySnippets extends Plugin {
 					line: aboveline,
 					ch: abovelineEnd,
 				};
+				// Try to trigger the snippet at the old position.
 				let maybeSnippet = this.triggerSnippet(editor, peekPos);
+
+				// If the snippet triggered, clean up the newline.
 				if (maybeSnippet) {
-					let snippetType = this.getSnippetType(maybeSnippet);
+					// delete newline at the end of snippet
+					let curpos = editor.getCursor();
+					let curoffset = editor.posToOffset(curpos);
+					// get end of replacement part
+					let rhsEndOffset =
+						curoffset + maybeSnippet.rhs.info.cursorEnd;
+					let rhsEndPos = editor.offsetToPos(rhsEndOffset);
+					// the line after that (works at document end)
+					let afterSnippetLinePos = {
+						line: rhsEndPos.line + 1,
+						ch: 0,
+					};
+					editor.replaceRange("", rhsEndPos, afterSnippetLinePos);
+
+					// If they want the newline added where the cursor is at (works weird for cursorEnd snippets but eh)
+					// TODO: maybe make another setting where add newline on enter is disabled if snippet has a cursorEnd?
 					if (
 						this.settings.triggerOnEnter ===
-						AutoTriggerOptions.EnabledNoWS
+						AutoTriggerOptions.EnabledYesWS
 					) {
-						// NoWS
-						if (snippetType === SnippetType.MLSR) {
-							// RCNN - do nothing
-						} else {
-							// RCNDMU - delete newline at the end of this line
-							let curpos = editor.getCursor();
-							// Get current line and find its end
-							// (Can also calculate it, but requires you to get the entire line string)
-							let curLineEndPos: EditorPosition = {
+						// Insert newline where we are at.
+						editor.exec("newlineAndIndent");
+						curpos = editor.getCursor();
+						// To "de-indent", delete until start of line.
+						editor.replaceRange(
+							"",
+							{
 								line: curpos.line,
-								ch: editor.getLine(curpos.line).length,
-							};
-							// Get next line's beginning
-							let nextLine = curpos.line + 1;
-							let nextLineStartPos: EditorPosition = {
-								line: nextLine,
 								ch: 0,
-							};
-							// Delete from end of current line to beginning of next line (erasing newline)
-							editor.replaceRange(
-								"",
-								curLineEndPos,
-								nextLineStartPos
-							);
-						}
-					} else {
-						// YesWS
-						// * Only do these if the rhs has no complex cursor end.
-						let curpos = editor.getCursor();
-						if (snippetType === SnippetType.MLSR) {
-							// RCNN - insert newline ("repeat enter") / replace curpos with newline
-							editor.exec("newlineAndIndent");
-							editor.exec("indentLess");
-						} else {
-							// RCNDMU - move to start of next line / to the right
-							editor.exec("goRight");
-
-							// * To calculate it:
-							// let nextLine = curpos.line + 1;
-							// let nextLineStartPos: EditorPosition = {
-							// 	line: nextLine,
-							// 	ch: 0,
-							// };
-							// editor.setCursor(nextLineStartPos);
-						}
+							},
+							curpos
+						);
 					}
 
 					return true;
