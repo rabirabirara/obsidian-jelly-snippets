@@ -339,8 +339,8 @@ export default class JellySnippets extends Plugin {
 		let { lhs, rhs } = snippet;
 		let type = SnippetType.SLSR;
 		// Compiler doesn't complain if we convert boolean to number with unary '+'.
-		type |= +lhs.contains("\n") && SnippetType.MLSR;
-		type |= +rhs.info.hasNewline && SnippetType.SLMR;
+		type |= +lhs.includes("\n") ? SnippetType.MLSR : 0;
+		type |= +rhs.info.hasNewline ? SnippetType.SLMR : 0;
 		return type;
 	}
 
