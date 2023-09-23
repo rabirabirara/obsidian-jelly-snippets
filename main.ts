@@ -231,14 +231,26 @@ export default class JellySnippets extends Plugin {
 						if (snippetType === SnippetType.MLSR) {
 							// RCNN - do nothing
 						} else {
-							// RCNDMU - delete from curpos to start of next line
+							// RCNDMU - delete newline at the end of this line
 							let curpos = editor.getCursor();
+							// Get current line and find its end
+							// (Can also calculate it, but requires you to get the entire line string)
+							let curLineEndPos: EditorPosition = {
+								line: curpos.line,
+								ch: editor.getLine(curpos.line).length,
+							};
+							// Get next line's beginning
 							let nextLine = curpos.line + 1;
 							let nextLineStartPos: EditorPosition = {
 								line: nextLine,
 								ch: 0,
 							};
-							editor.replaceRange("", curpos, nextLineStartPos);
+							// Delete from end of current line to beginning of next line (erasing newline)
+							editor.replaceRange(
+								"",
+								curLineEndPos,
+								nextLineStartPos
+							);
 						}
 					} else {
 						// YesWS
