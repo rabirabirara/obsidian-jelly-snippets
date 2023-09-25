@@ -64,7 +64,27 @@ Then typing `lhs` and triggering the snippet command would replace `lhs` with:
 rhs
 superb |+| superbowls
 ```
-	
+
+## Using Symbols (simple)
+
+Say you want to expand `hw` into a full hello-world function. Say we're using Rust. You define the snippet:
+
+```
+hw |+| fn hello() {
+%\t%\e
+}
+```
+
+When you trigger the snippet, you'll end up with this:
+
+```
+fn hello() {
+    |
+}
+```
+
+... where `|` represents your cursor. Of course, Obsidian is a markdown editor, so expect the little indent guide.
+
 ## Why?
 
 I wanted to make a generic snippets plugin that operated on text and worked as I needed. There is an existing snippets plugin already, [Text Snippets](https://github.com/ArianaKhit/text-snippets-obsidian) by ArianaKhit, but not only is the plugin code somewhat outdated and a little complex, it seems to use an older API. (It is a very good plugin by the way.)
@@ -79,13 +99,14 @@ It's since been incorporated back into [julia.vim](https://github.com/JuliaEdito
 
 ## Future Improvements/TODO
 
-- [ ] Control characters in snippets
-- [ ] Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
+- [x] Control characters in snippets (whitespace only)
+- [x] Semantic symbols in snippets (e.g. where does cursor go afterwards? a snippet with braces might benefit from placing the cursor inside...)
 - [ ] Regex capabilities - at least on selection.
 - [ ] A backup for snippets - or a way of specifying snippets in a file, to modularize snippets. May be useful if regex snippets need to be defined separately from text snippets.
-- [ ] Bugfixes and auditing?
+- [ ] Bugfixes and auditing.
 - [ ] Do the things liamcain suggested in my plugin PR to the Obsidian plugin repo. (one half done)
-
+- [ ] Working with Obsidians template stuff.
+      
 ### Other caveats
 
 - None right now, except that the maintainer of this plugin (me) is inexperienced and may break something. Keep your snippets safe if you write a lot of them. 
