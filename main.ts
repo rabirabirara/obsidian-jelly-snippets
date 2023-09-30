@@ -379,7 +379,7 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Specify your snippets here! Format: 'before<divider>after'. Surrounding your divider with a space is recommended for readability."
 			)
-			.addTextArea((textarea) =>
+			.addTextArea((textarea) => {
 				textarea
 					.setPlaceholder(
 						`before${this.plugin.settings.snippetPartDivider}after`
@@ -390,6 +390,10 @@ class JellySnippetsSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.plugin.reloadSnippets(); // ? is this necessary to update the snippets?
 					})
+				// the following two lines make editing the snippets easier
+				textarea.inputEl.setAttr("rows", 6); 
+				textarea.inputEl.setAttr("cols", 40);
+			}
 			);
 
 		new Setting(childEl)
