@@ -8,6 +8,8 @@ import {
 	Setting,
 } from "obsidian";
 
+import { EditorView } from "@codemirror/view";
+
 import { Symbol } from "symbol";
 import { LHS, RHS, Snippet } from "snippet";
 
@@ -279,40 +281,36 @@ export default class JellySnippets extends Plugin {
 		pos?: EditorPosition
 	): Snippet | undefined {
 		const curpos = pos ? pos : editor.getCursor();
+		const curoffset = editor.posToOffset(curpos);
+
+		// @ts-expect-error
+		const view = editor.cm as EditorView;
 
 		for (let [lhs, rhs] of Object.entries(this.multilineSnippets)) {
-			if (!this.selectBackN(editor, lhs.length, curpos)) {
-				// console.log(
-				// 	"Error: failed to select back N at: " +
-				// 		pos +
-				// 		" with lhs: " +
-				// 		lhs
-				// );
-				continue;
-			}
+			const from = curoffset - lhs.length;
+			const to = curoffset;
 
-			// If the selected string is the LHS, replace it!
-			let selected = editor.getSelection();
+			// Get the text just before the cursor
+			let selected = view.state.sliceDoc(from, to);
+
 			if (lhs === selected) {
-				editor.replaceSelection(rhs.data);
+				// Dispatch the replacement and move the cursor to where it should be.
+				view.dispatch({
+					changes: [
+						{
+							from,
+							to,
+							insert: rhs.data,
+						},
+					],
+					selection: {
+						anchor: from + rhs.data.length - rhs.info.cursorEnd,
+					},
+				});
 
-				// Reset selection to where the cursor is *after* replacement.
-				// Allows "enabled-with-whitespace" auto replacements to work.
-				this.unselect(editor);
-
-				// Now move cursor back until it has reached end.
-				// * This may be obvious, but since I'm uncertain if setCursor can take an offset, I'm making an extra translation back to EditorPosition
-				editor.setCursor(
-					editor.offsetToPos(
-						editor.posToOffset(editor.getCursor()) -
-							rhs.info.cursorEnd
-					)
-				);
+				// Return what you replaced.
 				return { lhs, rhs };
 			}
-
-			// Reset selection to where the cursor is.
-			this.unselect(editor, curpos);
 		}
 
 		// No replace - return undefined
