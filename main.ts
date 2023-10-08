@@ -127,10 +127,11 @@ export default class JellySnippets extends Plugin {
 
 	parseSnippets(): void {
 		// If they specified newline control character, split snippets by newline.
+		// TODO: Can we make it so that leaving the setting blank is newline separation?
 		let snippetDivider =
 			this.settings.snippetDivider == "\\n"
 				? "\n"
-				: this.settings.snippetDivider;
+				: this.settings.snippetDivider + "\n";
 
 		// go through the snippets file, split by the snippet divider, split by the part divider, put in map
 		let snippetLines = this.settings.snippetsFile.split(snippetDivider);
@@ -138,7 +139,7 @@ export default class JellySnippets extends Plugin {
 			// Trim newlines. Instead, use symbols to let people insert whitespace.
 			// This split means only the first division of the part divider is the LHS.
 			let snippetParts = snippet
-				.trim()
+				.trimEnd()
 				.split(this.settings.snippetPartDivider);
 			if (snippetParts.length !== 2) {
 				// probably an incomplete snippet
