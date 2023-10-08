@@ -29,7 +29,9 @@ Pretty simple. You probably have run into snippets before.
 
 Snippets are defined in a text area (like a file) in settings. Each snippet has two parts: lhs and rhs.
 
-The lhs (left hand side) determines what text gets replaced; the rhs (right hand side) determines what replaces the text.
+##### The lhs (left hand side) determines what text gets replaced; the rhs (right hand side) determines what replaces the text. 
+
+##### The lhs is *exactly* the text that will be replaced, while the rhs can have certain symbols to represent things like whitespace.
 
 Naturally, there is a symbol to divide these two halves of a snippet, called a snippet part divider:
 
@@ -42,6 +44,8 @@ So when you type `lhs` and then trigger the snippet command, it will replace the
 And, there is a symbol to divide each separate snippet in the list of snippets, called a snippet divider:
 
 `-==-`, for example.
+
+You must keep the snippet divider on their own line - that is, the plugin expects a newline after the snippet divider. (Implicitly, no two snippets can be on the same line.)
 
 So if you had the following snippets file:
 
