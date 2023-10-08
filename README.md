@@ -85,6 +85,13 @@ fn hello() {
 
 ... where `|` represents your cursor. Of course, Obsidian is a markdown editor, so expect the little indent guide.
 
+#### List of supported symbols
+
+- Newline: `%\n`
+- Tab: `%\t`
+- Space: `%\s`
+- Cursor Ending position (after snippet replacement): `%\e`
+
 ## Why?
 
 I wanted to make a generic snippets plugin that operated on text and worked as I needed. There is an existing snippets plugin already, [Text Snippets](https://github.com/ArianaKhit/text-snippets-obsidian) by ArianaKhit, but not only is the plugin code somewhat outdated and a little complex, it seems to use an older API. (It is a very good plugin by the way.)
