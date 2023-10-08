@@ -1,4 +1,4 @@
-import { RHS } from "snippet";
+import { RHS } from "src/snippet";
 
 export enum Symbol {
 	// on parse

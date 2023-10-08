@@ -8,20 +8,29 @@ import {
 	Setting,
 } from "obsidian";
 
-import { Symbol } from "symbol";
-import { LHS, RHS, Snippet } from "snippet";
+import { syntaxTree } from "@codemirror/language";
+import {
+	Extension,
+	RangeSetBuilder,
+	EditorState,
+	StateField,
+	StateEffect,
+	Transaction,
+} from "@codemirror/state";
+import {
+	EditorView,
+	WidgetType,
+	Decoration,
+	DecorationSet,
+} from "@codemirror/view";
+
+import { Symbol } from "src/symbol";
+import { LHS, RHS, Snippet, SnippetType } from "src/snippet";
 
 enum AutoTriggerOptions {
 	Disabled = "disabled",
 	EnabledNoWS = "n-ws",
 	EnabledYesWS = "y-ws",
-}
-
-enum SnippetType {
-	SLSR = 0,
-	SLMR = 1,
-	MLSR = 2,
-	MLMR = 3,
 }
 
 interface JellySnippetsSettings {
@@ -48,6 +57,83 @@ const DEFAULT_SETTINGS: JellySnippetsSettings = {
 	snippetDivider: "-==-",
 };
 
+const addEffect = StateEffect.define<number>();
+const subEffect = StateEffect.define<number>();
+const mulEffect = StateEffect.define<number>();
+const divEffect = StateEffect.define<number>();
+const resetEffect = StateEffect.define();
+
+// StateField.define(..) takes a StateFieldSpec as argument
+export const calculatorField = StateField.define<number>({
+	create(state: EditorState): number {
+		return 0;
+	},
+	update(oldState: number, transaction: Transaction): number {
+		let newState = oldState;
+
+		for (let effect of transaction.effects) {
+			if (effect.is(addEffect)) {
+				newState += effect.value;
+			} else if (effect.is(subEffect)) {
+				newState -= effect.value;
+			} else if (effect.is(mulEffect)) {
+				newState *= effect.value;
+			} else if (effect.is(divEffect)) {
+				newState /= effect.value;
+			} else if (effect.is(resetEffect)) {
+				newState = 0;
+			}
+		}
+
+		return newState;
+	},
+});
+
+export class EmojiWidget extends WidgetType {
+	toDOM(view: EditorView): HTMLElement {
+		const div = document.createElement("span");
+
+		div.innerText = "👉";
+
+		return div;
+	}
+}
+
+const decoration = Decoration.replace({
+	widget: new EmojiWidget(),
+});
+
+export const emojiListField = StateField.define<DecorationSet>({
+	create(state): DecorationSet {
+		return Decoration.none;
+	},
+	update(oldState: DecorationSet, transaction: Transaction): DecorationSet {
+		const builder = new RangeSetBuilder<Decoration>();
+
+		syntaxTree(transaction.state).iterate({
+			enter(node) {
+				if (node.type.name.startsWith("list")) {
+					// Position of the '-' or the '*'.
+					const listCharFrom = node.from - 2;
+
+					builder.add(
+						listCharFrom,
+						listCharFrom + 1,
+						Decoration.replace({
+							widget: new EmojiWidget(),
+						})
+					);
+				}
+			},
+		});
+
+		return builder.finish();
+	},
+	provide(field: StateField<DecorationSet>): Extension {
+		return EditorView.decorations.from(field);
+	},
+});
+
 export default class JellySnippets extends Plugin {
 	settings: JellySnippetsSettings;
 	private multilineSnippets: { [key: LHS]: RHS } = {};
@@ -55,6 +141,21 @@ export default class JellySnippets extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		this.registerEditorExtension(emojiListField);
+
+		this.addCommand({
+			id: "example-editor-command",
+			name: "Example editor command",
+			editorCallback: (editor, view) => {
+				// @ts-expect-error, not typed
+				const editorView = view.editor.cm as EditorView;
+
+				editorView.dispatch({
+					effects: [],
+				});
+			},
+		});
+		/*
 		// Check settings and load snippets in.
 		this.reloadSnippets();
 
@@ -75,7 +176,7 @@ export default class JellySnippets extends Plugin {
 				}
 			};
 
-			// Register for main window.
+			// Register key events for main window.
 			this.registerDomEvent(document, "keydown", onKeyEvent);
 
 			// If window changes, registerDomEvent for new window if so.
@@ -103,6 +204,7 @@ export default class JellySnippets extends Plugin {
 		});
 
 		this.addSettingTab(new JellySnippetsSettingTab(this.app, this));
+		*/
 	}
 
 	onunload() {}
