@@ -10,8 +10,8 @@ import {
 
 import { EditorView } from "@codemirror/view";
 
-import { Symbol } from "symbol";
-import { LHS, RHS, Snippet } from "snippet";
+import { Symbol } from "src/symbol";
+import { LHS, RHS, Snippet } from "src/snippet";
 
 enum AutoTriggerOptions {
 	Disabled = "disabled",
