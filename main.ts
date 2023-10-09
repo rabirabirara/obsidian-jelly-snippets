@@ -11,19 +11,12 @@ import {
 import { EditorView } from "@codemirror/view";
 
 import { Symbol } from "src/symbol";
-import { LHS, RHS, Snippet } from "src/snippet";
+import { LHS, RHS, Snippet, SnippetType } from "src/snippet";
 
 enum AutoTriggerOptions {
 	Disabled = "disabled",
 	EnabledNoWS = "n-ws",
 	EnabledYesWS = "y-ws",
-}
-
-enum SnippetType {
-	SLSR = 0,
-	SLMR = 1,
-	MLSR = 2,
-	MLMR = 3,
 }
 
 interface JellySnippetsSettings {

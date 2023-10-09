@@ -11,3 +11,10 @@ export type Snippet = {
 	lhs: LHS;
 	rhs: RHS;
 };
+
+export enum SnippetType {
+	SLSR = 0,
+	SLMR = 1,
+	MLSR = 2,
+	MLMR = 3,
+}
